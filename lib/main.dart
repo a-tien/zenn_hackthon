@@ -5,8 +5,11 @@ import 'pages/home_page.dart';
 import 'pages/explore_page.dart';
 import 'pages/itinerary_page.dart';
 import 'pages/profile_page.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); // Initialize Firebase
   runApp(const MyApp());
 }
 
