@@ -5,8 +5,18 @@ import 'pages/home_page.dart';
 import 'pages/explore_page.dart';
 import 'pages/itinerary_page.dart';
 import 'pages/profile_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  // 確保 Flutter 引擎初始化完成
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 初始化 Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   runApp(const MyApp());
 }
 
