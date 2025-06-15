@@ -1,28 +1,99 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/itinerary.dart';
+import '../pages/add_itinerary_page.dart';
+import '../pages/itinerary_detail_page.dart';
+import '../widgets/itinerary_card.dart';
 
-class ItineraryPage extends StatelessWidget {
+class ItineraryPage extends StatefulWidget {
   const ItineraryPage({super.key});
 
   @override
+  State<ItineraryPage> createState() => _ItineraryPageState();
+}
+
+class _ItineraryPageState extends State<ItineraryPage> {
+  List<Itinerary> itineraries = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItineraries();
+  }
+
+  Future<void> _loadItineraries() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isLoading = true;
+    });
+    
+    final itinerariesJson = prefs.getStringList('itineraries') ?? [];
+    
+    setState(() {
+      itineraries = itinerariesJson
+          .map((json) => Itinerary.fromJson(jsonDecode(json)))
+          .toList();
+      isLoading = false;
+    });
+  }
+
+  void _navigateToAddItinerary() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddItineraryPage()),
+    );
+    
+    if (result == true) {
+      _loadItineraries();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                // 行程列表或空狀態
+                itineraries.isEmpty
+                    ? _buildEmptyState()
+                    : _buildItinerariesList(),
+                    
+                // 若有行程，在底部顯示固定的按鈕
+                if (!isLoading && itineraries.isNotEmpty)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _buildCreateButton(),
+                  ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.calendar_today, size: 80, color: Colors.blueGrey),
-          SizedBox(height: 16),
-          Text(
+          const Icon(Icons.calendar_today, size: 80, color: Colors.blueGrey),
+          const SizedBox(height: 16),
+          const Text(
             "您的行程",
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              "在這裡查看和管理您計劃的所有旅遊行程。",
+              "目前尚無行程喔！點擊下方按鈕新增您的第一個行程。",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -30,8 +101,96 @@ class ItineraryPage extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 24),
+          // 空狀態下的新增按鈕
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _navigateToAddItinerary,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  '建立新行程',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+
+  Widget _buildCreateButton() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _navigateToAddItinerary,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blueAccent,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: const Text(
+          '建立新行程',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItinerariesList() {
+  return ListView.builder(
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // 底部留出空間給固定按鈕
+    itemCount: itineraries.length,
+    itemBuilder: (context, index) {
+      final itinerary = itineraries[index];
+      return ItineraryCard(
+        itinerary: itinerary,
+        onTap: () async {
+          // 導航到行程詳情頁面
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ItineraryDetailPage(itinerary: itinerary),
+            ),
+          );
+          
+          // 如果返回結果為true，則刷新行程列表
+          if (result == true) {
+            _loadItineraries();
+          }
+        },
+      );
+    },
+  );
+}
 }
