@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'feature/home/page/home_page.dart';
 import 'feature/discover/page/discover_page.dart';
+import 'feature/itinerary/pages/itinerary_page.dart';
+import 'feature/itinerary/pages/profile_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'feature/home/components/home_section_title.dart';
+import 'feature/itinerary/components/product_card.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,8 +46,8 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _pages = [
     MyHomePage(),     // 你可以換成 HomePage()
     DiscoverPage(),                  // 探索頁（地圖頁）
-    Center(child: Text('行程')),
-    Center(child: Text('我的')),
+    ItineraryPage(),
+    ProfilePage(),
   ];
 
   @override
@@ -69,3 +75,7 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 }
+
+
+
+
