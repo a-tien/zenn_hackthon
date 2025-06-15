@@ -1,22 +1,14 @@
 import 'package:flutter/material.dart';
-import 'widgets/section_title.dart';
-import 'widgets/product_card.dart';
-import 'pages/home_page.dart';
-import 'pages/explore_page.dart';
-import 'pages/itinerary_page.dart';
-import 'pages/profile_page.dart';
+import 'feature/home/page/home_page.dart';
+import 'feature/discover/page/discover_page.dart';
+import 'feature/itinerary/pages/itinerary_page.dart';
+import 'feature/itinerary/pages/profile_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'feature/home/components/home_section_title.dart';
+import 'feature/itinerary/components/product_card.dart';
 
-void main() async {
-  // 確保 Flutter 引擎初始化完成
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // 初始化 Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+void main() {
   runApp(const MyApp());
 }
 
@@ -28,66 +20,43 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '旅遊推薦',
       theme: ThemeData(
-        colorScheme: ColorScheme.light(
+        colorScheme: const ColorScheme.light(
           background: Colors.white,
           primary: Colors.black,
         ),
         scaffoldBackgroundColor: Colors.white,
-        fontFamily: 'San Francisco', // Apple-like font if available
+        fontFamily: 'San Francisco',
       ),
-      home: const MyHomePage(),
+      home: const MainNavigation(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _selectedIndex = 0;
+class _MainNavigationState extends State<MainNavigation> {
+  int _selectedIndex = 1;
 
-  // List of pages to display
-  final List<Widget> _pages = const [
-    HomePage(),
-    ExplorePage(),
+  final List<Widget> _pages = [
+    MyHomePage(),     // 你可以換成 HomePage()
+    DiscoverPage(),                  // 探索頁（地圖頁）
     ItineraryPage(),
     ProfilePage(),
-  ];
-
-  // Page titles
-  final List<String> _titles = const [
-    '旅遊推薦',
-    '探索',
-    '行程',
-    '我的',
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_selectedIndex]),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        titleTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-        // Only show app bar for pages other than home
-        toolbarHeight: _selectedIndex == 0 ? 0 : kToolbarHeight,
-      ),
-      body: SafeArea(
-        child: _pages[_selectedIndex],
-      ),
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blueAccent,
+        selectedItemColor: Colors.green,
         unselectedItemColor: Colors.black54,
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,
@@ -97,24 +66,16 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         },
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '主頁',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: '探索',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: '行程',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '我的',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: '主頁'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: '探索'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: '行程'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
         ],
       ),
     );
   }
 }
+
+
+
+

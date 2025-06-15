@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/itinerary.dart';
-import '../pages/add_itinerary_page.dart';
-import '../pages/itinerary_detail_page.dart';
-import '../widgets/itinerary_card.dart';
+import 'add_itinerary_page.dart';
+import 'itinerary_detail_page.dart';
+import '../components/itinerary_card.dart';
 
 class ItineraryPage extends StatefulWidget {
   const ItineraryPage({super.key});
