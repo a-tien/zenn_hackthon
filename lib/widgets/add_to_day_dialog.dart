@@ -141,8 +141,6 @@ class _AddToDayDialogState extends State<AddToDayDialog>
   }
 
   @override
-  @override
-  @override
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -222,7 +220,7 @@ class _AddToDayDialogState extends State<AddToDayDialog>
     );
   }
 
-  // 替換 _buildDayOptionsView 方法
+  // 構建日期選項視圖
   Widget _buildDayOptionsView(int dayIndex) {
     final day = widget.itinerary.itineraryDays[dayIndex];
     final spots = day.spots;
@@ -301,250 +299,6 @@ class _AddToDayDialogState extends State<AddToDayDialog>
     }
     
     return cards;
-  }
-
-  // 創建一個專門處理頁面視圖和指示器的小部件
-  class _PositionCardsPageView extends StatefulWidget {
-    final List<Widget> cards;
-    final Function(int) onSpotAdd;
-
-    const _PositionCardsPageView({
-      required this.cards,
-      required this.onSpotAdd,
-    });
-
-    @override
-    State<_PositionCardsPageView> createState() => _PositionCardsPageViewState();
-  }
-
-  class _PositionCardsPageViewState extends State<_PositionCardsPageView> {
-    late PageController _pageController;
-    int _currentPage = 0;
-
-    @override
-    void initState() {
-      super.initState();
-      _pageController = PageController(viewportFraction: 0.85);
-      _pageController.addListener(_onPageChanged);
-    }
-
-    @override
-    void dispose() {
-      _pageController.removeListener(_onPageChanged);
-      _pageController.dispose();
-      super.dispose();
-    }
-
-    void _onPageChanged() {
-      if (!_pageController.hasClients) return;
-      
-      final page = _pageController.page?.round() ?? 0;
-      if (page != _currentPage) {
-        setState(() {
-          _currentPage = page;
-        });
-      }
-    }
-
-    @override
-    Widget build(BuildContext context) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // 頁面視圖
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: widget.cards.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: widget.cards[index],
-                  );
-                },
-              ),
-            ),
-            
-            // 指示器點點
-            if (widget.cards.length > 1)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    widget.cards.length,
-                    (index) => Container(
-                      width: 8,
-                      height: 8,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: index == _currentPage
-                            ? Colors.blueAccent
-                            : Colors.grey[300],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      );
-    }
-  }
-
-  Widget _buildDayOptionsView(int dayIndex) {
-    final day = widget.itinerary.itineraryDays[dayIndex];
-    final spots = day.spots;
-
-    // 創建位置選項卡片
-    List<Widget> positionCards = [];
-
-    // 建立卡片列表 (保持原有邏輯)
-    // 如果沒有景點，只顯示"添加為第一個景點"
-    if (spots.isEmpty) {
-      positionCards.add(
-        _buildPositionCard(
-          dayIndex: dayIndex,
-          position: 0,
-          label: '添加為第一個景點',
-          isFirst: true,
-          isLast: true,
-          isOptimal: true, // 空行程時，第一個位置就是最佳位置
-        ),
-      );
-    } else {
-      // 添加到第一個位置
-      positionCards.add(
-        _buildPositionCard(
-          dayIndex: dayIndex,
-          position: 0,
-          label: '排在第一個',
-          isFirst: true,
-          isLast: false,
-          prevSpotName: '',
-          nextSpotName: spots[0].name,
-        ),
-      );
-
-      // 添加到中間位置
-      for (int i = 0; i < spots.length - 1; i++) {
-        positionCards.add(
-          _buildPositionCard(
-            dayIndex: dayIndex,
-            position: i + 1,
-            label: '',
-            isFirst: false,
-            isLast: false,
-            prevSpotName: spots[i].name,
-            nextSpotName: spots[i + 1].name,
-            prevOrder: i + 1,
-            nextOrder: i + 2,
-          ),
-        );
-      }
-
-      // 添加到最後一個位置
-      positionCards.add(
-        _buildPositionCard(
-          dayIndex: dayIndex,
-          position: spots.length,
-          label: '排在最後',
-          isFirst: false,
-          isLast: true,
-          prevSpotName: spots.last.name,
-          nextSpotName: '',
-          prevOrder: spots.length,
-        ),
-      );
-
-      // 標記最佳排序選項（這裡假設最後一個是最佳選項，實際應根據API返回）
-      if (positionCards.isNotEmpty) {
-        // 先移除最後一個元素
-        final lastCard = positionCards.removeLast();
-        // 添加帶有最佳標記的新卡片
-        positionCards.add(
-          _buildPositionCard(
-            dayIndex: dayIndex,
-            position: spots.length,
-            label: '排在最後',
-            isFirst: false,
-            isLast: true,
-            prevSpotName: spots.last.name,
-            nextSpotName: '',
-            prevOrder: spots.length,
-            isOptimal: true,
-          ),
-        );
-      }
-    }
-
-    // 使用 StatefulBuilder 來管理頁面狀態
-    return StatefulBuilder(
-      builder: (context, setState) {
-        // 初始化頁面控制器和當前頁面索引
-        final PageController pageController = PageController(
-          viewportFraction: 0.85, // 設置視窗比例，顯示部分下一個卡片
-          initialPage: 0,
-        );
-        int currentPage = 0;
-
-        // 添加頁面變化監聽器
-        pageController.addListener(() {
-          final newPage = pageController.page?.round() ?? 0;
-          if (currentPage != newPage) {
-            setState(() {
-              currentPage = newPage;
-            });
-          }
-        });
-
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // 頁面指示器
-              Expanded(
-                child: PageView.builder(
-                  itemCount: positionCards.length,
-                  controller: pageController,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: positionCards[index],
-                    );
-                  },
-                ),
-              ),
-              
-              // 添加小圓點指示器 - 使用當前頁面變量
-              if (positionCards.length > 1) 
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      positionCards.length,
-                      (index) => Container(
-                        width: 8,
-                        height: 8,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: index == currentPage 
-                              ? Colors.blueAccent 
-                              : Colors.grey[300],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      }
-    );
   }
 
   // 修改 _buildPositionCard 方法的參數和確定按鈕
@@ -663,7 +417,6 @@ class _AddToDayDialogState extends State<AddToDayDialog>
     );
   }
 
-  // 中間位置的垂直排列顯示
   // 中間位置的垂直排列顯示 - 改進版
   Widget _buildVerticalOrderingDisplay({
     required String prevSpotName,
@@ -861,7 +614,6 @@ class _AddToDayDialogState extends State<AddToDayDialog>
     );
   }
 
-  // 第一個位置的垂直排列顯示
   // 第一個位置的垂直排列顯示 - 改進版
   Widget _buildFirstPositionDisplay(String nextSpotName) {
     return Column(
@@ -1165,6 +917,97 @@ class _AddToDayDialogState extends State<AddToDayDialog>
           ),
         ),
       ],
+    );
+  }
+}
+
+// 將 _PositionCardsPageView 類移到外部
+class _PositionCardsPageView extends StatefulWidget {
+  final List<Widget> cards;
+  final Function(int) onSpotAdd;
+
+  const _PositionCardsPageView({
+    required this.cards,
+    required this.onSpotAdd,
+  });
+
+  @override
+  State<_PositionCardsPageView> createState() => _PositionCardsPageViewState();
+}
+
+class _PositionCardsPageViewState extends State<_PositionCardsPageView> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.85);
+    _pageController.addListener(_onPageChanged);
+  }
+
+  @override
+  void dispose() {
+    _pageController.removeListener(_onPageChanged);
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged() {
+    if (!_pageController.hasClients) return;
+    
+    final page = _pageController.page?.round() ?? 0;
+    if (page != _currentPage) {
+      setState(() {
+        _currentPage = page;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // 頁面視圖
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: widget.cards.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: widget.cards[index],
+                );
+              },
+            ),
+          ),
+          
+          // 指示器點點
+          if (widget.cards.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  widget.cards.length,
+                  (index) => Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: index == _currentPage
+                          ? Colors.blueAccent
+                          : Colors.grey[300],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
