@@ -4,8 +4,15 @@ import '../components/home_product_slider.dart';
 import '../model/home_item_model.dart';
 import 'chat_demo_app.dart';
 
-class MyHomePage extends StatelessWidget {
-  MyHomePage({super.key});
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  
 
   final List<HomeItemModel> recommendedItems = [
     HomeItemModel(
@@ -25,7 +32,7 @@ class MyHomePage extends StatelessWidget {
     ),
     HomeItemModel(
       title: '山脈探險',
-      imageUrl: 'https://images.unsplash.com/photo-1499951360442-8f6c1b3e5c7b?auto=format&fit=crop&w=400&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=400&q=80',
     ),
   ];
 

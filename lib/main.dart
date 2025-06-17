@@ -56,7 +56,7 @@ class _MainNavigationState extends State<MainNavigation> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.green,
+        selectedItemColor: const Color.fromARGB(255, 73, 138, 179),
         unselectedItemColor: Colors.black54,
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,
