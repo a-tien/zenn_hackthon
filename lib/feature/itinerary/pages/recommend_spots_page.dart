@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import '../models/itinerary.dart';
 import '../models/recommended_spot.dart';
-import '../widgets/recommended_spot_card.dart';
-import '../widgets/recommendation_tabs.dart';
+import '../components/recommended_spot_card.dart';
+import '../components/recommendation_tabs.dart';
 
 class RecommendSpotsPage extends StatefulWidget {
   final Itinerary itinerary;

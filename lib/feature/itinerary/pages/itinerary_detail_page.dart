@@ -4,13 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/itinerary.dart';
 import '../models/itinerary_day.dart';
 import '../models/spot.dart';
-import '../widgets/spot_card.dart';
-import '../widgets/transportation_segment.dart';
-import '../widgets/edit_itinerary_dialog.dart';
-import '../widgets/add_spot_options.dart';
-import '../widgets/day_transportation_dialog.dart';
-import '../widgets/change_transport_dialog.dart';
-import '../pages/trip_assistant_page.dart';
+import '../components/spot_card.dart';
+import '../components/transportation_segment.dart';
+import '../components/edit_itinerary_dialog.dart';
+import '../components/add_spot_options.dart';
+import '../components/day_transportation_dialog.dart';
+import '../components/change_transport_dialog.dart';
+import 'trip_assistant_page.dart';
 
 class ItineraryDetailPage extends StatefulWidget {
   final Itinerary itinerary;
@@ -31,7 +31,6 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
   void initState() {
     super.initState();
     _itinerary = widget.itinerary;
-
     // 如果沒有預設行程日，創建默認的
     if (_itinerary.itineraryDays.isEmpty) {
       _createDefaultItineraryDays();
