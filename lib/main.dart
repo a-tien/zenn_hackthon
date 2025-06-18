@@ -3,28 +3,17 @@ import 'feature/home/page/home_page.dart';
 import 'feature/discover/page/discover_page.dart';
 import 'feature/itinerary/pages/itinerary_page.dart';
 import 'feature/profile/pages/profile_page.dart';
-import 'feature/profile/pages/login_page.dart'; // 导入登录页面
-import 'feature/profile/services/auth_service.dart'; // 导入身份验证服务
-import 'widgets/section_title.dart';
-import 'widgets/product_card.dart';
-import 'pages/home_page.dart';
-import 'pages/explore_page.dart';
-import 'pages/itinerary_page.dart';
-import 'pages/profile_page.dart';
+import 'feature/profile/pages/login_page.dart'; // 導入登入頁面
+import 'feature/profile/services/auth_service.dart'; // 導入身份驗證服務
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'feature/home/components/home_section_title.dart';
-import 'feature/itinerary/components/product_card.dart';
 
 void main() async {
+  // 確保 Flutter 引擎初始化完成
   WidgetsFlutterBinding.ensureInitialized();
   
   // 初始化预设用户
   await AuthService.initDefaultUser();
-  
-void main() async {
-  // 確保 Flutter 引擎初始化完成
-  WidgetsFlutterBinding.ensureInitialized();
   
   // 初始化 Firebase
   await Firebase.initializeApp(
@@ -48,14 +37,12 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
         fontFamily: 'San Francisco',
-      ),
-      // 定義路由
+      ),      // 定義路由
       routes: {
         '/': (context) => const MainNavigation(),
         '/login': (context) => const LoginPage(),
       },
       initialRoute: '/',
-      home: const MyHomePage(),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -69,13 +56,11 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 1;
-
-  final List<Widget> _pages = [
+  int _selectedIndex = 1;  final List<Widget> _pages = [
     MyHomePage(),     // 你可以換成 HomePage()
-    DiscoverPage(),                  // 探索頁（地圖頁）
+    DiscoverPage(),            // 探索頁（地圖頁）
     ItineraryPage(),
-    ProfilePage(),
+    const ProfilePage(),
   ];
 
   @override
