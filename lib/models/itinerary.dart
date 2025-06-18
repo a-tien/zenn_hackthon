@@ -31,7 +31,8 @@ class Itinerary {
           .toList();
     }
 
-    return Itinerary(
+    // 創建行程實例
+    Itinerary itinerary = Itinerary(
       name: json['name'],
       useDateRange: json['useDateRange'],
       days: json['days'],
@@ -42,6 +43,21 @@ class Itinerary {
       travelType: json['travelType'],
       itineraryDays: days,
     );
+    
+    // 如果沒有行程天數數據，則初始化行程天數
+    if (itinerary.itineraryDays.isEmpty && itinerary.days > 0) {
+      for (int i = 0; i < itinerary.days; i++) {
+        itinerary.itineraryDays.add(
+          ItineraryDay(
+            dayNumber: i + 1,
+            transportation: itinerary.transportation,
+            spots: [],
+          ),
+        );
+      }
+    }
+    
+    return itinerary;
   }
 
   Map<String, dynamic> toJson() {

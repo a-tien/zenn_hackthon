@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'feature/home/page/home_page.dart';
+import 'feature/discover/page/discover_page.dart';
+import 'feature/itinerary/pages/itinerary_page.dart';
+import 'feature/profile/pages/profile_page.dart';
+import 'feature/profile/pages/login_page.dart'; // 导入登录页面
+import 'feature/profile/services/auth_service.dart'; // 导入身份验证服务
 import 'widgets/section_title.dart';
 import 'widgets/product_card.dart';
 import 'pages/home_page.dart';
@@ -8,6 +14,12 @@ import 'pages/profile_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 初始化预设用户
+  await AuthService.initDefaultUser();
+  
 void main() async {
   // 確保 Flutter 引擎初始化完成
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +47,12 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         fontFamily: 'San Francisco', // Apple-like font if available
       ),
+      // 定義路由
+      routes: {
+        '/': (context) => const MainNavigation(),
+        '/login': (context) => const LoginPage(),
+      },
+      initialRoute: '/',
       home: const MyHomePage(),
       debugShowCheckedModeBanner: false,
     );
