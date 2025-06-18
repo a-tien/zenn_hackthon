@@ -1,0 +1,364 @@
+import 'package:flutter/material.dart';
+import '../models/user_profile.dart';
+import '../services/auth_service.dart';
+import 'login_page.dart';
+import 'companions_page.dart';
+import 'travel_quiz_page.dart';
+import '../../collection/pages/favorite_page.dart';
+
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  // 暫時使用一個假數據，後面會替換成數據庫
+  late UserProfile _userProfile;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  // 加載用戶資料
+  Future<void> _loadUserProfile() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 檢查是否有已登入用戶
+      final currentUser = await AuthService.getCurrentUser();
+      
+      setState(() {
+        // 如果有已登入用戶，使用該用戶資料；否則使用遊客資料
+        _userProfile = currentUser ?? UserProfile.guest();
+        _isLoading = false;
+      });
+    } catch (e) {
+      // 發生錯誤時使用遊客資料
+      setState(() {
+        _userProfile = UserProfile.guest();
+        _isLoading = false;
+      });
+    }
+  }
+
+  // 顯示設置菜單
+  void _showSettingsMenu() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('設置'),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: 導航到設置頁面
+              },
+            ),
+            if (_userProfile.isLoggedIn)
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text('登出', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _handleLogout();
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
+  
+  // 處理登出
+  Future<void> _handleLogout() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      await AuthService.logout();
+      
+      // 重新加載用戶資料
+      await _loadUserProfile();
+    } catch (e) {
+      // 處理錯誤
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('登出時發生錯誤：$e')),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+  
+  // 處理登入按鈕點擊
+  void _handleLoginButtonPressed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    ).then((result) {
+      // 如果登入成功或用戶返回，重新加載用戶資料
+      _loadUserProfile();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('個人頁面'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _showSettingsMenu,
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 個人資料卡片
+                _buildProfileCard(),
+
+                const SizedBox(height: 32),
+
+                // 功能按鈕
+                _buildFunctionButtons(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 個人資料卡片
+  Widget _buildProfileCard() {
+    return SizedBox(
+      width: double.infinity, // 確保卡片佔據整個屏幕寬度
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 頭像
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: _userProfile.avatarUrl != null
+                    ? NetworkImage(_userProfile.avatarUrl!)
+                    : null,
+                child: _userProfile.avatarUrl == null
+                    ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                    : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              // 用戶名
+              Text(
+                _userProfile.isLoggedIn ? "嗨! ${_userProfile.name}" : "訪客",
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 8),
+
+              // 旅遊類型標籤 (只在登入且travelType不為null時顯示)
+              if (_userProfile.isLoggedIn && _userProfile.travelType != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _userProfile.travelType!,
+                    style: const TextStyle(
+                      color: Colors.amber,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 24),
+
+              // 旅行足跡 (只在登入時顯示)
+              if (_userProfile.isLoggedIn)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.map, color: Colors.blueAccent),
+                    const SizedBox(width: 8),
+                    Text(
+                      "旅行足跡: ${_userProfile.itineraryCount} 個行程",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.blueAccent,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+
+              const SizedBox(height: 24),
+
+              // 登入按鈕 (只在未登入時顯示)
+              if (!_userProfile.isLoggedIn)
+                SizedBox(
+                  width: double.infinity, // 確保按鈕佔據整個卡片寬度
+                  child: ElevatedButton(
+                    onPressed: _handleLoginButtonPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      "登入",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 功能按鈕
+  Widget _buildFunctionButtons() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "功能",
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+
+        // 我的收藏
+        _buildFunctionButton(
+          icon: Icons.favorite,
+          title: "我的收藏",
+          color: Colors.redAccent,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FavoritePage()),
+            );
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        // 我的旅伴
+        _buildFunctionButton(
+          icon: Icons.people,
+          title: "我的旅伴",
+          color: Colors.blueAccent,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CompanionsPage()),
+            );
+          },
+        ),        const SizedBox(height: 16),
+        
+        // 旅遊類型測驗
+        _buildFunctionButton(
+          icon: Icons.psychology,
+          title: "旅遊類型測驗",
+          color: Colors.purpleAccent,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TravelQuizPage()),
+            ).then((_) {
+              // 從測驗頁面返回時重新加載用戶資料
+              _loadUserProfile();
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  // 單個功能按鈕
+  Widget _buildFunctionButton({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

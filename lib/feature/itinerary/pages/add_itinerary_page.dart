@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/itinerary.dart';
+import '../models/itinerary_day.dart';
+import '../models/spot.dart'; // 導入 Spot 類
 
 class AddItineraryPage extends StatefulWidget {
   const AddItineraryPage({super.key});
@@ -48,6 +50,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
 
   Future<void> _saveItinerary() async {
     if (_formKey.currentState!.validate()) {
+      // 先創建行程實例
       final itinerary = Itinerary(
         name: _nameController.text,
         useDateRange: _useDateRange,
@@ -57,7 +60,20 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
         destination: _destinationController.text,
         transportation: _transportation,
         travelType: _travelType,
+        // 初始化空的行程天數列表
+        itineraryDays: [],
       );
+      
+      // 為每天創建 ItineraryDay 實例
+      for (int i = 0; i < itinerary.days; i++) {
+        itinerary.itineraryDays.add(
+          ItineraryDay(
+            dayNumber: i + 1,
+            transportation: _transportation,
+            spots: i == 0 ? _getDefaultSpots() : [], // 為第一天添加預設景點
+          ),
+        );
+      }
 
       final prefs = await SharedPreferences.getInstance();
       final itinerariesJson = prefs.getStringList('itineraries') ?? [];
@@ -106,6 +122,54 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
         _endDate = picked.end;
       });
     }
+  }
+
+  // 獲取默認景點（用於示例）
+  List<Spot> _getDefaultSpots() {
+    return [
+      Spot(
+        id: '1',
+        name: '北海道大學',
+        imageUrl:
+            'https://images.weserv.nl/?url=daigakujc.jp/smart_phone/top_img/00038/2.jpg',
+        order: 1,
+        stayHours: 1,
+        stayMinutes: 30,
+        startTime: '09:00',
+        latitude: 43.0742,
+        longitude: 141.3405,
+        nextTransportation: '步行',
+        travelTimeMinutes: 15,
+      ),
+      Spot(
+        id: '2',
+        name: '札幌市時計台',
+        imageUrl:
+            'https://images.weserv.nl/?url=www.jigsaw.jp/img/goods/L/epo7738925113.jpg',
+        order: 2,
+        stayHours: 0,
+        stayMinutes: 45,
+        startTime: '11:00',
+        latitude: 43.0631,
+        longitude: 141.3536,
+        nextTransportation: '地鐵',
+        travelTimeMinutes: 20,
+      ),
+      Spot(
+        id: '3',
+        name: '狸小路商店街',
+        imageUrl:
+            'https://images.unsplash.com/photo-1591793826788-ae2ce68cca7c?auto=format&fit=crop&w=300&q=80',
+        order: 3,
+        stayHours: 2,
+        stayMinutes: 0,
+        startTime: '13:00',
+        latitude: 43.0562,
+        longitude: 141.3509,
+        nextTransportation: '',
+        travelTimeMinutes: 0,
+      ),
+    ];
   }
 
   @override
