@@ -4,7 +4,6 @@ import 'feature/discover/page/discover_page.dart';
 import 'feature/itinerary/pages/itinerary_page.dart';
 import 'feature/profile/pages/profile_page.dart';
 import 'feature/profile/pages/login_page.dart'; // 導入登入頁面
-import 'feature/profile/services/auth_service.dart'; // 導入身份驗證服務
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -12,13 +11,13 @@ void main() async {
   // 確保 Flutter 引擎初始化完成
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 初始化预设用户
-  await AuthService.initDefaultUser();
-  
-  // 初始化 Firebase
+  // 先初始化 Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // 不再需要初始化預設用戶，Firebase 會自動管理用戶
+  // await AuthService.initDefaultUser();
   
   runApp(const MyApp());
 }

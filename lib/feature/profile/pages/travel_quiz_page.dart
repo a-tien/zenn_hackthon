@@ -100,7 +100,6 @@ class _TravelQuizPageState extends State<TravelQuizPage> {
       });
     }
   }
-
   // 提交測驗
   Future<void> _submitQuiz() async {
     setState(() {
@@ -110,8 +109,13 @@ class _TravelQuizPageState extends State<TravelQuizPage> {
     try {
       // 計算測驗結果
       final result = QuizService.calculateQuizResult(_answers);
-        // 更新用戶的旅遊類型
+      // 更新用戶的旅遊類型
       await QuizService.updateTravelType(_answers);
+      
+      // 結束載入狀態
+      setState(() {
+        _isLoading = false;
+      });
       
       if (mounted) {
         // 導航到結果頁面
@@ -122,7 +126,10 @@ class _TravelQuizPageState extends State<TravelQuizPage> {
               result: result,
             ),
           ),
-        );
+        ).then((_) {
+          // 當結果頁面關閉時，回到個人頁面
+          Navigator.of(context).pop();
+        });
       }
     } catch (e) {
       if (mounted) {

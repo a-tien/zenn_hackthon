@@ -1,4 +1,5 @@
 import 'itinerary_day.dart';
+import 'itinerary_member.dart';
 
 class Itinerary {
   String name;
@@ -10,7 +11,7 @@ class Itinerary {
   String transportation;
   String travelType;
   List<ItineraryDay> itineraryDays;
-
+  List<ItineraryMember> members;
   Itinerary({
     required this.name,
     required this.useDateRange,
@@ -21,13 +22,23 @@ class Itinerary {
     required this.transportation,
     required this.travelType,
     List<ItineraryDay>? itineraryDays,
-  }) : this.itineraryDays = itineraryDays ?? [];
-
+    List<ItineraryMember>? members,
+  }) : 
+      this.itineraryDays = itineraryDays ?? [],
+      this.members = members ?? [];
   factory Itinerary.fromJson(Map<String, dynamic> json) {
     List<ItineraryDay> days = [];
     if (json.containsKey('itineraryDays') && json['itineraryDays'] != null) {
       days = (json['itineraryDays'] as List)
           .map((day) => ItineraryDay.fromJson(day))
+          .toList();
+    }
+    
+    // 解析成員
+    List<ItineraryMember> members = [];
+    if (json.containsKey('members') && json['members'] != null) {
+      members = (json['members'] as List)
+          .map((member) => ItineraryMember.fromJson(member))
           .toList();
     }
 
@@ -42,6 +53,7 @@ class Itinerary {
       transportation: json['transportation'],
       travelType: json['travelType'],
       itineraryDays: days,
+      members: members,
     );
     
     // 如果沒有行程天數數據，則初始化行程天數
@@ -59,7 +71,6 @@ class Itinerary {
     
     return itinerary;
   }
-
   Map<String, dynamic> toJson() {
     return {
       'name': name,
@@ -71,6 +82,7 @@ class Itinerary {
       'transportation': transportation,
       'travelType': travelType,
       'itineraryDays': itineraryDays.map((day) => day.toJson()).toList(),
+      'members': members.map((member) => member.toJson()).toList(),
     };
   }
 

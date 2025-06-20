@@ -20,7 +20,9 @@ class _QuizResultPageState extends State<QuizResultPage> {
   void initState() {
     super.initState();
     _description = QuizService.getTravelTypeDescription(widget.result);
-  }  void _navigateToProfile() {
+  }
+  
+  void _navigateToProfile() {
     Navigator.of(context).pop(); // 關閉當前頁面，返回上一頁
   }
 
@@ -119,9 +121,9 @@ class _QuizResultPageState extends State<QuizResultPage> {
                   style: const TextStyle(
                     fontSize: 16,
                     height: 1.5,
-                  ),
-                ),
-                  const SizedBox(height: 32),
+                  ),                ),
+                
+                const SizedBox(height: 32),
                 
                 // 返回按鈕
                 ElevatedButton(
@@ -131,12 +133,12 @@ class _QuizResultPageState extends State<QuizResultPage> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
-                      vertical: 16,
-                    ),
+                      vertical: 16,                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                  ),                  child: const Text(
+                  ),
+                  child: const Text(
                     '關閉結果頁面',
                     style: TextStyle(
                       fontSize: 16,

@@ -25,7 +25,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _nameController.dispose();
     super.dispose();
   }
-
+  
   // 處理註冊
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) {
@@ -38,32 +38,52 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      final success = await AuthService.register(
+      final result = await AuthService.register(
         _emailController.text.trim(),
         _passwordController.text,
         _nameController.text.trim(),
       );
 
-      if (success) {
-        // 註冊成功，返回登入頁面
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('註冊成功，請登入')),
-          );
-          Navigator.pop(context);
-        }
-      } else {
-        // 註冊失敗
+      // 確保無論結果如何都先停止載入
+      if (mounted) {
         setState(() {
-          _errorMessage = '該電子郵件已被註冊';
           _isLoading = false;
         });
       }
+
+      if (result.success) {
+        // 註冊成功，返回登入頁面
+        if (mounted) {
+          // 顯示成功訊息
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('註冊成功，請登入')),
+          );
+          
+          // 延遲一下再返回，讓使用者看到成功提示
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              Navigator.pop(context);
+            }
+          });
+        }
+      } else {
+        // 註冊失敗
+        if (mounted) {
+          setState(() {
+            _errorMessage = result.errorMessage ?? '註冊時發生錯誤';
+          });
+        }
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = '註冊時發生錯誤：$e';
-        _isLoading = false;
-      });
+      // 處理任何其他非預期錯誤
+      print('註冊時發生未預期錯誤: $e');
+      
+      if (mounted) {
+        setState(() {
+          _errorMessage = '註冊時發生錯誤，請稍後再試';
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -154,7 +174,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   },
                 ),
                 const SizedBox(height: 16),
-
+                
                 // 密碼欄位
                 TextFormField(
                   controller: _passwordController,
@@ -168,8 +188,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     if (value == null || value.isEmpty) {
                       return '請輸入密碼';
                     }
-                    if (value.length < 4) {
-                      return '密碼至少需要4個字符';
+                    if (value.length < 6) {
+                      return '密碼至少需要6個字符';
                     }
                     return null;
                   },

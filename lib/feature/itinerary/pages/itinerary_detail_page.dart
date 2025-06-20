@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/itinerary.dart';
 import '../models/itinerary_day.dart';
+import '../models/itinerary_member.dart';
 import '../models/spot.dart';
 import '../components/spot_card.dart';
 import '../components/transportation_segment.dart';
@@ -11,6 +12,8 @@ import '../components/add_spot_options.dart';
 import '../components/day_transportation_dialog.dart';
 import '../components/change_transport_dialog.dart';
 import 'trip_assistant_page.dart';
+import 'manage_itinerary_members_page.dart';
+import 'add_edit_itinerary_member_page.dart';
 
 class ItineraryDetailPage extends StatefulWidget {
   final Itinerary itinerary;
@@ -732,6 +735,19 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
           const SizedBox(height: 24),
 
+          // 行程成員區塊
+          const Text(
+            "行程成員",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 行程成員內容
+          _buildMembersSection(),
+
+          const SizedBox(height: 24),
+
           // 行程天數概覽
           const Text(
             "行程概覽",
@@ -1039,5 +1055,241 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
         },
       ),
     );
+  }
+
+  // 顯示行程成員區塊
+  Widget _buildMembersSection() {
+    if (_itinerary.members.isEmpty) {
+      // 無成員時顯示空狀態
+      return Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: InkWell(
+          onTap: _manageTravelMembers,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              children: [
+                const Icon(Icons.person_add, size: 48, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  '尚未設定行程成員',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: _manageTravelMembers,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('設定行程成員'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 有成員時顯示成員列表
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 標題與成員數量
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '共 ${_itinerary.members.length} 位成員',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.edit, size: 16),
+                  label: const Text('編輯'),
+                  onPressed: _manageTravelMembers,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            // 成員頭像列表
+            SizedBox(
+              height: 80,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _itinerary.members.length,
+                itemBuilder: (context, index) {
+                  final member = _itinerary.members[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Column(
+                      children: [
+                        member.getAvatar(size: 50, onTap: () {
+                          _showMemberDetails(member);
+                        }),
+                        const SizedBox(height: 4),
+                        Text(
+                          member.nickname,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 顯示成員詳情
+  void _showMemberDetails(ItineraryMember member) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 標題
+            Row(
+              children: [
+                member.getAvatar(size: 40),
+                const SizedBox(width: 12),
+                Text(
+                  member.nickname,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // 年齡層
+            Row(
+              children: [
+                const Icon(Icons.cake, color: Colors.grey, size: 18),
+                const SizedBox(width: 8),
+                Text('年齡層: ${member.ageGroup}'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            // 興趣
+            if (member.interests.isNotEmpty) ...[
+              const Text('興趣:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: member.interests.map((interest) => Chip(
+                  label: Text(interest, style: const TextStyle(fontSize: 12)),
+                  backgroundColor: Colors.blue.shade100,
+                  padding: const EdgeInsets.all(4),
+                )).toList(),
+              ),
+              const SizedBox(height: 12),
+            ],
+            
+            // 特殊需求
+            if (member.specialNeeds.isNotEmpty) ...[
+              const Text('特殊需求:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: member.specialNeeds.map((need) => Chip(
+                  label: Text(need, style: const TextStyle(fontSize: 12)),
+                  backgroundColor: Colors.orange.shade100,
+                  padding: const EdgeInsets.all(4),
+                )).toList(),
+              ),
+            ],
+            const SizedBox(height: 16),
+            
+            // 編輯按鈕
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _editMember(member);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('編輯成員'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 管理行程成員
+  Future<void> _manageTravelMembers() async {
+    final result = await Navigator.push<List<ItineraryMember>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ManageItineraryMembersPage(
+          itinerary: _itinerary,
+          onMembersUpdated: (updatedMembers) {
+            setState(() {
+              _itinerary.members = updatedMembers;
+            });
+            _saveItinerary();
+          },
+        ),
+      ),
+    );
+    
+    if (result != null) {
+      setState(() {
+        _itinerary.members = result;
+      });
+      await _saveItinerary();
+    }
+  }
+
+  // 編輯成員
+  Future<void> _editMember(ItineraryMember member) async {
+    final result = await Navigator.push<ItineraryMember>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddEditItineraryMemberPage(member: member),
+      ),
+    );
+    
+    if (result == 'delete') {
+      // 刪除成員
+      setState(() {
+        _itinerary.members.removeWhere((m) => m.id == member.id);
+      });
+    } else if (result != null) {
+      // 更新成員
+      setState(() {
+        final index = _itinerary.members.indexWhere((m) => m.id == member.id);
+        if (index != -1) {
+          _itinerary.members[index] = result;
+        }
+      });
+    }
+    
+    await _saveItinerary();
   }
 }

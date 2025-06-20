@@ -14,7 +14,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // 暫時使用一個假數據，後面會替換成數據庫
   late UserProfile _userProfile;
   bool _isLoading = true;
 
@@ -23,28 +22,37 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     _loadUserProfile();
   }
-
   // 加載用戶資料
   Future<void> _loadUserProfile() async {
+    // 開始載入
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // 檢查是否有已登入用戶
-      final currentUser = await AuthService.getCurrentUser();
+      // 使用超時限制，防止長時間卡住
+      final currentUser = await AuthService.getCurrentUser()
+          .timeout(const Duration(seconds: 5));
       
-      setState(() {
-        // 如果有已登入用戶，使用該用戶資料；否則使用遊客資料
-        _userProfile = currentUser ?? UserProfile.guest();
-        _isLoading = false;
-      });
+      // 確保組件仍然掛載
+      if (mounted) {
+        setState(() {
+          _userProfile = currentUser ?? UserProfile.guest();
+          _isLoading = false;
+        });
+      }
     } catch (e) {
+      print('載入用戶資料時發生錯誤: $e');
       // 發生錯誤時使用遊客資料
-      setState(() {
-        _userProfile = UserProfile.guest();
-        _isLoading = false;
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('載入用戶資料時發生錯誤，使用遊客模式')),
+        );
+        setState(() {
+          _userProfile = UserProfile.guest();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -102,14 +110,14 @@ class _ProfilePageState extends State<ProfilePage> {
       });
     }
   }
-  
-  // 處理登入按鈕點擊
+    // 處理登入按鈕點擊
   void _handleLoginButtonPressed() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
     ).then((result) {
-      // 如果登入成功或用戶返回，重新加載用戶資料
+      // 無論結果如何，都重新加載用戶資料
+      print('從登入頁面返回，重新載入用戶資料');
       _loadUserProfile();
     });
   }
@@ -226,14 +234,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
 
-              const SizedBox(height: 24),
-
-              // 登入按鈕 (只在未登入時顯示)
+              const SizedBox(height: 24),              // 登入按鈕 (只在未登入時顯示)
               if (!_userProfile.isLoggedIn)
                 SizedBox(
                   width: double.infinity, // 確保按鈕佔據整個卡片寬度
                   child: ElevatedButton(
-                    onPressed: _handleLoginButtonPressed,
+                    onPressed: _isLoading ? null : _handleLoginButtonPressed,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       foregroundColor: Colors.white,

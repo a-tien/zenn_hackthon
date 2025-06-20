@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'register_page.dart';
-import 'profile_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,12 +15,12 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
-
+  
   @override
   void initState() {
     super.initState();
-    // 初始化預設用戶
-    AuthService.initDefaultUser();
+    // Firebase 不需要初始化預設用戶
+    // AuthService.initDefaultUser();
   }
 
   @override
@@ -30,7 +29,7 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
-
+  
   // 處理登入
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) {
@@ -43,29 +42,102 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final userProfile = await AuthService.login(
+      final result = await AuthService.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
-      if (userProfile != null) {
-        // 登入成功，返回上一個頁面
-        if (mounted) {
-          // 直接返回前一個頁面，而不是替換當前頁面
-          Navigator.pop(context, true);
-        }
-      } else {
-        // 登入失敗
+      // 確保無論結果如何都先停止載入
+      if (mounted) {
         setState(() {
-          _errorMessage = '帳號或密碼錯誤';
           _isLoading = false;
         });
       }
+
+      if (result.success) {
+        // 登入成功，返回上一個頁面
+        if (mounted) {
+          // 顯示成功訊息
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('登入成功')),
+          );
+          
+          // 延遲一下再返回，讓使用者看到成功提示
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              // 直接返回前一個頁面，而不是替換當前頁面
+              Navigator.pop(context, true);
+            }
+          });
+        }
+      } else {
+        // 登入失敗
+        if (mounted) {
+          setState(() {
+            _errorMessage = result.errorMessage ?? '帳號或密碼錯誤';
+          });
+        }
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = '登入時發生錯誤：$e';
-        _isLoading = false;
-      });
+      // 處理任何其他非預期錯誤
+      print('登入時發生未預期錯誤: $e');
+      
+      if (mounted) {
+        setState(() {
+          _errorMessage = '登入時發生錯誤，請稍後再試';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // 處理忘記密碼
+  Future<void> _handleForgotPassword() async {
+    final email = _emailController.text.trim();
+    
+    if (email.isEmpty) {
+      // 如果郵件欄位為空，顯示錯誤提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('請先輸入您的電子郵件')),
+      );
+      return;
+    }
+
+    // 顯示載入指示器
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 調用密碼重設功能
+      final success = await AuthService.resetPassword(email);
+      
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+        if (success) {
+          // 顯示成功訊息
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('密碼重設郵件已發送到 $email')),
+          );
+        } else {
+          // 顯示錯誤訊息
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('發送密碼重設郵件失敗，請確認郵箱是否正確')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('發送密碼重設郵件時發生錯誤')),
+        );
+      }
     }
   }
 
@@ -151,9 +223,21 @@ class _LoginPageState extends State<LoginPage> {
                       return '請輸入密碼';
                     }
                     return null;
-                  },
+                  },                ),
+                const SizedBox(height: 16),
+
+                // 忘記密碼按鈕
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isLoading ? null : _handleForgotPassword,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                    ),
+                    child: const Text('忘記密碼？'),
+                  ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
 
                 // 登入按鈕
                 ElevatedButton(
@@ -181,6 +265,27 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                 ),
                 const SizedBox(height: 16),
+
+                // 忘記密碼按鈕
+                TextButton(
+                  onPressed: _isLoading ? null : _handleForgotPassword,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.blue,
+                          ),
+                        )
+                      : const Text(
+                          '忘記密碼？',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 16,
+                          ),
+                        ),
+                ),
 
                 // 註冊連結
                 Row(

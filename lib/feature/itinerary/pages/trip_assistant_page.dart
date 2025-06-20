@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/itinerary.dart';
 import 'recommend_spots_page.dart';
+import 'trip_pre_planning_page.dart';
 
 class TripAssistantPage extends StatelessWidget {
   final Itinerary itinerary;
@@ -72,6 +73,7 @@ class TripAssistantPage extends StatelessWidget {
                 },
               ),
               
+
               const SizedBox(height: 20),
               
               // 完整規劃按鈕
@@ -82,9 +84,7 @@ class TripAssistantPage extends StatelessWidget {
                 icon: Icons.schedule,
                 color: Colors.amber,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('此功能即將推出')),
-                  );
+                  _showPlanningOptions(context);
                 },
               ),
               
@@ -104,6 +104,67 @@ class TripAssistantPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }  // 顯示規劃選項對話框
+  void _showPlanningOptions(BuildContext context) {
+    print('Showing planning options dialog'); // 添加日誌
+    
+    // 覆蓋現有行程
+    void _navigateToPrePlanning(bool preserveExisting) {
+      print('Navigating to pre-planning with preserveExisting=$preserveExisting'); // 添加日誌
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TripPrePlanningPage(
+            itinerary: itinerary,
+            preserveExisting: preserveExisting,
+          ),
+        ),
+      );
+    }
+    
+    // 顯示選項對話框
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('請選擇規劃方式'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 覆蓋現有行程選項
+              ListTile(
+                leading: const Icon(Icons.refresh, color: Colors.blue),
+                title: const Text('覆蓋現有行程'),
+                subtitle: const Text('刪除所有已選的景點，重新規劃整個行程'),
+                onTap: () {
+                  print('Dialog: selected overwrite'); // 添加日誌
+                  Navigator.pop(dialogContext);
+                  _navigateToPrePlanning(false);
+                },
+              ),
+              // 保留已選行程選項
+              ListTile(
+                leading: const Icon(Icons.add_circle, color: Colors.green),
+                title: const Text('保留已選的行程'),
+                subtitle: const Text('根據已選景點，繼續規劃其他景點和活動'),
+                onTap: () {
+                  print('Dialog: selected preserve'); // 添加日誌
+                  Navigator.pop(dialogContext);
+                  _navigateToPrePlanning(true);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('取消'),
+            ),
+          ],
+        );
+      },
     );
   }
 

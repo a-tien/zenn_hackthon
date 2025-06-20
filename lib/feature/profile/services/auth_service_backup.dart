@@ -255,17 +255,4 @@ class AuthService {
       print('登出時發生錯誤: $e');
     }
   }
-
-  // 忘記密碼功能
-  static Future<bool> resetPassword(String email) async {
-    try {
-      print('發送密碼重設郵件到: $email');
-      await _auth.sendPasswordResetEmail(email: email);
-      print('密碼重設郵件發送成功');
-      return true;
-    } catch (e) {
-      print('發送密碼重設郵件失敗: $e');
-      return false;
-    }
-  }
 }
