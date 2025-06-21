@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
 
 // 註冊結果類
@@ -27,7 +27,6 @@ class LoginResult {
 
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _currentUserKey = 'current_user';
 
   // 初始化預設用戶功能將不再使用，Firebase不需要預設用戶
@@ -49,18 +48,20 @@ class AuthService {
       // 更新 Firebase Auth 用戶顯示名稱
       await userCredential.user!.updateDisplayName(name);
       
-      // 嘗試在 Firestore 中保存用戶額外資料
+      // 建立 Firestore 使用者資料（加強錯誤提示）
       try {
-        await _firestore.collection('users').doc(uid).set({
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          'id': uid,
           'name': name,
           'email': email,
           'travelType': null,
+          'itineraryCount': 0,
+          'isLoggedIn': true,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        print('用戶註冊成功並保存到 Firestore: $uid');
-      } catch (firestoreError) {
-        print('Firestore 寫入失敗，但用戶仍然註冊成功: $firestoreError');
-        // 即使 Firestore 寫入失敗，用戶仍然在 Auth 中註冊成功
+        print('用戶註冊成功並建立 Firestore 資料: $uid');
+      } catch (e) {
+        print('Firestore 建立個人資料失敗: $e');
       }
       
       return RegisterResult(success: true);
@@ -102,7 +103,7 @@ class AuthService {
       final User? user = userCredential.user;
       
       if (user != null) {
-        // 創建基本用戶資料
+        // 先創建基本使用者資料，避免卡住
         UserProfile userProfile = UserProfile(
           id: user.uid,
           name: user.displayName ?? 'User',
@@ -112,39 +113,12 @@ class AuthService {
           isLoggedIn: true,
         );
         
-        // 嘗試從 Firestore 獲取詳細資料
-        try {
-          final DocumentSnapshot userDoc = await _firestore
-              .collection('users')
-              .doc(user.uid)
-              .get()
-              .timeout(const Duration(seconds: 3));
-          
-          if (userDoc.exists) {
-            final Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-            
-            // 更新用戶資料
-            userProfile = UserProfile(
-              id: user.uid,
-              name: userData['name'] ?? user.displayName ?? 'User',
-              email: user.email ?? '',
-              travelType: userData['travelType'],
-              itineraryCount: 0,
-              isLoggedIn: true,
-            );
-          }
-        } catch (firestoreError) {
-          print('從 Firestore 獲取用戶資料失敗: $firestoreError');
-          // 繼續使用基本資料，不影響登入流程
-        }
-        
         // 保存到 SharedPreferences
         try {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString(_currentUserKey, jsonEncode(userProfile.toJson()));
         } catch (e) {
           print('保存到 SharedPreferences 失敗: $e');
-          // 不影響登入流程
         }
         
         print('用戶登入成功: ${user.uid}');
@@ -184,47 +158,25 @@ class AuthService {
       print('登入時發生未知錯誤: $e');
       return LoginResult(success: false, errorMessage: '登入時發生錯誤，請稍後再試');
     }
-  }
-  // 獲取當前登入用戶
+  }  // 獲取當前登入用戶
   static Future<UserProfile?> getCurrentUser() async {
     try {
-      // 從 Firebase 獲取當前用戶
       final User? currentUser = _auth.currentUser;
-      
       if (currentUser != null) {
-        try {
-          // 從 Firestore 獲取用戶詳細資料 (添加超時限制)
-          final DocumentSnapshot userDoc = await _firestore
-              .collection('users')
-              .doc(currentUser.uid)
-              .get()
-              .timeout(const Duration(seconds: 5));
-          
-          if (userDoc.exists) {
-            final Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-            
-            return UserProfile(
-              id: currentUser.uid,
-              name: userData['name'] ?? currentUser.displayName ?? 'User',
-              email: currentUser.email ?? '',
-              travelType: userData['travelType'],
-              itineraryCount: 0, // 可從 Firestore 另外查詢
-              isLoggedIn: true,
-            );
-          } else {
-            // 用戶存在於 Auth 但不存在於 Firestore，只返回基本資料
-            return UserProfile(
-              id: currentUser.uid,
-              name: currentUser.displayName ?? 'User',
-              email: currentUser.email ?? '',
-              travelType: null,
-              itineraryCount: 0,
-              isLoggedIn: true,
-            );
-          }
-        } catch (e) {
-          print('從 Firestore 獲取用戶資料時發生錯誤: $e');
-          // 如果 Firestore 查詢失敗，僅返回 Auth 中的基本用戶資料
+        // 從 Firestore 取得完整個人資料
+        final doc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
+        if (doc.exists) {
+          final data = doc.data()!;
+          return UserProfile(
+            id: data['id'] ?? currentUser.uid,
+            name: data['name'] ?? currentUser.displayName ?? 'User',
+            email: data['email'] ?? currentUser.email ?? '',
+            travelType: data['travelType'],
+            itineraryCount: data['itineraryCount'] ?? 0,
+            isLoggedIn: true,
+          );
+        } else {
+          // 若 Firestore 無資料，回傳基本資料
           return UserProfile(
             id: currentUser.uid,
             name: currentUser.displayName ?? 'User',
@@ -235,8 +187,7 @@ class AuthService {
           );
         }
       }
-      
-      return null; // 沒有登入用戶
+      return null;
     } catch (e) {
       print('獲取當前用戶時發生錯誤: $e');
       return null;

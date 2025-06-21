@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/quiz_service.dart';
 
 class QuizResultPage extends StatefulWidget {
@@ -20,6 +22,20 @@ class _QuizResultPageState extends State<QuizResultPage> {
   void initState() {
     super.initState();
     _description = QuizService.getTravelTypeDescription(widget.result);
+    _saveTravelTypeToFirestore();
+  }
+
+  Future<void> _saveTravelTypeToFirestore() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'travelType': widget.result,
+        });
+      }
+    } catch (e) {
+      // Handle error if needed
+    }
   }
   
   void _navigateToProfile() {
@@ -113,15 +129,17 @@ class _QuizResultPageState extends State<QuizResultPage> {
                 ),
                 
                 const SizedBox(height: 32),
-                
-                // 描述
+                  // 描述
                 Text(
                   _description,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 16,
                     height: 1.5,
-                  ),                ),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
                 
                 const SizedBox(height: 32),
                 

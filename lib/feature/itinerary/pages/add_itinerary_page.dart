@@ -6,6 +6,8 @@ import 'dart:convert';
 import '../models/itinerary.dart';
 import '../models/itinerary_day.dart';
 import '../models/spot.dart'; // 導入 Spot 類
+import '../models/destination.dart';
+import 'select_destinations_page.dart';
 
 class AddItineraryPage extends StatefulWidget {
   const AddItineraryPage({super.key});
@@ -17,7 +19,8 @@ class AddItineraryPage extends StatefulWidget {
 class _AddItineraryPageState extends State<AddItineraryPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _destinationController = TextEditingController();
+  
+  List<Destination> _selectedDestinations = [];
   
   bool _useDateRange = false;
   int _days = 1;
@@ -40,16 +43,21 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
       end: _endDate,
     );
   }
-
   @override
   void dispose() {
     _nameController.dispose();
-    _destinationController.dispose();
     super.dispose();
   }
-
   Future<void> _saveItinerary() async {
     if (_formKey.currentState!.validate()) {
+      // 檢查是否至少選擇了一個目的地
+      if (_selectedDestinations.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('請至少選擇一個目的地')),
+        );
+        return;
+      }
+      
       // 先創建行程實例
       final itinerary = Itinerary(
         name: _nameController.text,
@@ -57,7 +65,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
         days: _useDateRange ? _calculateDays() : _days,
         startDate: _useDateRange ? _dateRange!.start : _startDate,
         endDate: _useDateRange ? _dateRange!.end : _endDate,
-        destination: _destinationController.text,
+        destinations: _selectedDestinations,
         transportation: _transportation,
         travelType: _travelType,
         // 初始化空的行程天數列表
@@ -170,6 +178,151 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
         travelTimeMinutes: 0,
       ),
     ];
+  }
+
+  // 構建目的地選擇區塊
+  Widget _buildDestinationSection() {
+    if (_selectedDestinations.isEmpty) {
+      // 顯示新增目的地按鈕
+      return GestureDetector(
+        onTap: _openDestinationSelector,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.grey.shade400,
+              style: BorderStyle.solid,
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.grey.shade50,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add,
+                color: Colors.grey.shade600,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '新增目的地+',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 顯示已選目的地標籤
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        // 已選目的地標籤
+        ..._selectedDestinations.map((destination) => _buildDestinationChip(destination)),
+        // 新增按鈕
+        _buildAddDestinationChip(),
+      ],
+    );
+  }
+
+  // 構建目的地標籤
+  Widget _buildDestinationChip(Destination destination) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.blueAccent.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            destination.name,
+            style: const TextStyle(
+              color: Colors.blueAccent,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: () => _removeDestination(destination),
+            child: const Icon(
+              Icons.close,
+              size: 16,
+              color: Colors.blueAccent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 構建新增目的地標籤
+  Widget _buildAddDestinationChip() {
+    return GestureDetector(
+      onTap: _openDestinationSelector,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade400),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.add,
+              size: 16,
+              color: Colors.grey.shade600,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '新增+',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 開啟目的地選擇頁面
+  Future<void> _openDestinationSelector() async {
+    final result = await Navigator.push<List<Destination>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectDestinationsPage(
+          initialSelectedDestinations: _selectedDestinations,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedDestinations = result;
+      });
+    }
+  }
+
+  // 移除目的地
+  void _removeDestination(Destination destination) {
+    setState(() {
+      _selectedDestinations.remove(destination);
+    });
   }
 
   @override
@@ -340,8 +493,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                       ),
                     ),
                   const SizedBox(height: 24),
-                  
-                  // 3. 目的地 - 標題與內容分離
+                    // 3. 目的地 - 標題與內容分離
                   const Text(
                     '目的地',
                     style: TextStyle(
@@ -350,20 +502,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _destinationController,
-                    decoration: const InputDecoration(
-                      hintText: '請輸入行程的目的地',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '請輸入目的地';
-                      }
-                      return null;
-                    },
-                  ),
+                  _buildDestinationSection(),
                   const SizedBox(height: 24),
                   
                   // 4. 主要交通方式 - 標題與內容分離

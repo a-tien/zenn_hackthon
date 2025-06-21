@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/itinerary.dart';
+import '../models/destination.dart';
+import '../pages/select_destinations_page.dart';
 
 class EditItineraryDialog extends StatefulWidget {
   final Itinerary itinerary;
@@ -21,10 +23,8 @@ class _EditItineraryDialogState extends State<EditItineraryDialog> {
   late bool _useDateRange;
   late int _days;
   late DateTime _startDate;
-  late DateTime _endDate;
-  late DateTimeRange _dateRange;
-  bool _isProcessing = false;
-
+  late DateTime _endDate;  late DateTimeRange _dateRange;
+  late List<Destination> _selectedDestinations;
   @override
   void initState() {
     super.initState();
@@ -43,6 +43,7 @@ class _EditItineraryDialogState extends State<EditItineraryDialog> {
       widget.itinerary.endDate.day
     );
     _dateRange = DateTimeRange(start: _startDate, end: _endDate);
+    _selectedDestinations = List.from(widget.itinerary.destinations);
   }
 
   @override
@@ -88,7 +89,6 @@ class _EditItineraryDialogState extends State<EditItineraryDialog> {
       });
     }
   }
-
   void _handleUpdate() {
   if (_nameController.text.trim().isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -104,15 +104,125 @@ class _EditItineraryDialogState extends State<EditItineraryDialog> {
     days: _useDateRange ? _calculateDays() : _days,
     startDate: _startDate,
     endDate: _endDate,
-    destination: widget.itinerary.destination,
+    destinations: _selectedDestinations,
     transportation: widget.itinerary.transportation,
     travelType: widget.itinerary.travelType,
     // 不要包含 itineraryDays，讓主頁面處理這部分
   );
-  
-  // 返回更新後的行程對象，而不是直接調用回調
+    // 返回更新後的行程對象，而不是直接調用回調
   Navigator.of(context).pop(updatedItinerary);
 }
+
+  // 構建目的地選擇區域
+  Widget _buildDestinationsSection() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                '已選目的地',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: _selectDestinations,
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('新增'),
+                style: TextButton.styleFrom(
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_selectedDestinations.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                '尚未選擇目的地',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _selectedDestinations.map((destination) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        destination.name,
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: () => _removeDestination(destination),
+                        child: Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // 選擇目的地
+  Future<void> _selectDestinations() async {
+    final result = await Navigator.push<List<Destination>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectDestinationsPage(
+          initialSelectedDestinations: _selectedDestinations,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedDestinations = result;
+      });
+    }
+  }
+
+  // 移除目的地
+  void _removeDestination(Destination destination) {
+    setState(() {
+      _selectedDestinations.removeWhere((d) => d.id == destination.id);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -255,12 +365,20 @@ class _EditItineraryDialogState extends State<EditItineraryDialog> {
                       ),
                     ],
                   ),
-                ),
-              ),
+                ),            ),
+            const SizedBox(height: 16),
+            
+            // 目的地管理
+            const Text(
+              '目的地',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            _buildDestinationsSection(),
           ],
         ),
       ),
-          actions: [
+      actions: [
       TextButton(
         onPressed: () => Navigator.pop(context), // 直接關閉對話框，不返回數據
         child: const Text('取消'),

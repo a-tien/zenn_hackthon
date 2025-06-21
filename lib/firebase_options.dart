@@ -41,48 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDtfL92CxPBF3C0zZQm0v8U1Pv4_KYSa88',
-    appId: '1:1052880675814:web:76c2f5f97d614d1ad62c27',
-    messagingSenderId: '1052880675814',
-    projectId: 'travel-plan-7e416',
-    authDomain: 'travel-plan-7e416.firebaseapp.com',
-    storageBucket: 'travel-plan-7e416.firebasestorage.app',
-    measurementId: 'G-X55F4WZL1F',
+    apiKey: 'AIzaSyCB-1YhS0ZaKYfYwKdZ_fDrTa9a1yDShRA',
+    appId: '1:1088581851074:web:d9bb41ec8ed18ce909a85b',
+    messagingSenderId: '1088581851074',
+    projectId: 'travel-plan-caba3',
+    authDomain: 'travel-plan-caba3.firebaseapp.com',
+    storageBucket: 'travel-plan-caba3.firebasestorage.app',
+    measurementId: 'G-M1D88NRVJ1',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD68_nHC5Ff3Uxa-JJJUTTt5YNsT9b3HQs',
-    appId: '1:1052880675814:android:25373b0b2c9175e9d62c27',
-    messagingSenderId: '1052880675814',
-    projectId: 'travel-plan-7e416',
-    storageBucket: 'travel-plan-7e416.firebasestorage.app',
+    apiKey: 'AIzaSyAtw3VRkq3RUZvV2YiIbtRsnZihLIFMA30',
+    appId: '1:1088581851074:android:ea187c5edbb37a4909a85b',
+    messagingSenderId: '1088581851074',
+    projectId: 'travel-plan-caba3',
+    storageBucket: 'travel-plan-caba3.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyC0Qzv0EiZLVDvNrCmTID8941b7RZ6Frxc',
-    appId: '1:1052880675814:ios:a18659079c02f101d62c27',
-    messagingSenderId: '1052880675814',
-    projectId: 'travel-plan-7e416',
-    storageBucket: 'travel-plan-7e416.firebasestorage.app',
+    apiKey: 'AIzaSyDVW_M841a1I2u69yW1fgpdf_GCO1s8zQo',
+    appId: '1:1088581851074:ios:fdf532feea7c0da009a85b',
+    messagingSenderId: '1088581851074',
+    projectId: 'travel-plan-caba3',
+    storageBucket: 'travel-plan-caba3.firebasestorage.app',
     iosBundleId: 'com.example.myApp1',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyC0Qzv0EiZLVDvNrCmTID8941b7RZ6Frxc',
-    appId: '1:1052880675814:ios:a18659079c02f101d62c27',
-    messagingSenderId: '1052880675814',
-    projectId: 'travel-plan-7e416',
-    storageBucket: 'travel-plan-7e416.firebasestorage.app',
+    apiKey: 'AIzaSyDVW_M841a1I2u69yW1fgpdf_GCO1s8zQo',
+    appId: '1:1088581851074:ios:fdf532feea7c0da009a85b',
+    messagingSenderId: '1088581851074',
+    projectId: 'travel-plan-caba3',
+    storageBucket: 'travel-plan-caba3.firebasestorage.app',
     iosBundleId: 'com.example.myApp1',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDtfL92CxPBF3C0zZQm0v8U1Pv4_KYSa88',
-    appId: '1:1052880675814:web:2ab2812ec0dda10bd62c27',
-    messagingSenderId: '1052880675814',
-    projectId: 'travel-plan-7e416',
-    authDomain: 'travel-plan-7e416.firebaseapp.com',
-    storageBucket: 'travel-plan-7e416.firebasestorage.app',
-    measurementId: 'G-NJS6FDDKRM',
+    apiKey: 'AIzaSyCB-1YhS0ZaKYfYwKdZ_fDrTa9a1yDShRA',
+    appId: '1:1088581851074:web:7f39c5b4948ee13f09a85b',
+    messagingSenderId: '1088581851074',
+    projectId: 'travel-plan-caba3',
+    authDomain: 'travel-plan-caba3.firebaseapp.com',
+    storageBucket: 'travel-plan-caba3.firebasestorage.app',
+    measurementId: 'G-6SCXPRQV8V',
   );
+
 }

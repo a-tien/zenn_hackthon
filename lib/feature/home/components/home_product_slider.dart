@@ -4,9 +4,7 @@ import '../model/home_item_model.dart';
 import '../page/home_detail_page.dart';
 import 'package:my_app_1/feature/itinerary/models/itinerary.dart';
 import 'package:my_app_1/feature/itinerary/models/itinerary_day.dart';
-
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import 'package:my_app_1/feature/itinerary/models/destination.dart';
 
 class HomeProductSlider extends StatefulWidget {
   final List<HomeItemModel> items;
@@ -18,15 +16,22 @@ class HomeProductSlider extends StatefulWidget {
 }
 
 class _HomeProductSliderState extends State<HomeProductSlider> {
-  bool isLoading = true;
-  List<Itinerary> itineraries = [
+  bool isLoading = true;  List<Itinerary> itineraries = [
   Itinerary(
     name: '預設旅程',
     useDateRange: true,
     days: 3,
     startDate: DateTime.now(),
     endDate: DateTime.now().add(const Duration(days: 2)),
-    destination: '東京',
+    destinations: [
+      Destination(
+        id: 'tokyo',
+        name: '東京',
+        country: '日本',
+        prefecture: '東京都',
+        type: 'domestic',
+      ),
+    ],
     transportation: '電車',
     travelType: '自由行',
     itineraryDays: [

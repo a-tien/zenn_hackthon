@@ -255,14 +255,13 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
       final currentTabIndex = _tabController.index;
       final List<ItineraryDay> existingDays = List.from(
         _itinerary.itineraryDays,
-      );
-
-      // 步驟 2: 更新基本屬性
+      );      // 步驟 2: 更新基本屬性
       _itinerary.name = updatedItinerary.name;
       _itinerary.useDateRange = updatedItinerary.useDateRange;
       _itinerary.days = updatedItinerary.days;
       _itinerary.startDate = updatedItinerary.startDate;
       _itinerary.endDate = updatedItinerary.endDate;
+      _itinerary.destinations = updatedItinerary.destinations;
 
       // 步驟 3: 處理天數變化
       if (oldDays != _itinerary.days) {
@@ -620,9 +619,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                     ],
                   ),
 
-                  const SizedBox(height: 8),
-
-                  // 行程目的地
+                  const SizedBox(height: 8),                  // 行程目的地
                   Row(
                     children: [
                       const Icon(
@@ -631,13 +628,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                         color: Colors.grey,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        _itinerary.destination,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
+                      Expanded(child: _buildDestinationsDisplay()),
                     ],
                   ),
 
@@ -1292,4 +1283,37 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
     
     await _saveItinerary();
   }
+
+  // 構建目的地顯示
+  Widget _buildDestinationsDisplay() {
+    if (_itinerary.destinations.isEmpty) {
+      return Text(
+        '尚未設定目的地',
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.grey.shade600,
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: _itinerary.destinations.map((destination) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Text(
+          destination.name,
+          style: TextStyle(
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
+      )).toList(),
+    );  }
 }

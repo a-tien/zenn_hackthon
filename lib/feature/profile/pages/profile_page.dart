@@ -56,6 +56,30 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // 刷新使用者資料
+  Future<void> _refreshUserProfile() async {
+    if (!_userProfile.isLoggedIn) return;
+    
+    try {
+      final updatedProfile = await AuthService.getCurrentUser();
+      if (mounted && updatedProfile != null) {
+        setState(() {
+          _userProfile = updatedProfile;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('使用者資料已更新')),
+        );
+      }
+    } catch (e) {
+      print('刷新使用者資料失敗: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('刷新失敗，請稍後再試')),
+        );
+      }
+    }
+  }
   // 顯示設置菜單
   void _showSettingsMenu() {
     showModalBottomSheet(
@@ -66,7 +90,15 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (context) {
         return Wrap(
           children: [
-            ListTile(
+            if (_userProfile.isLoggedIn)
+              ListTile(
+                leading: const Icon(Icons.refresh),
+                title: const Text('刷新資料'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _refreshUserProfile();
+                },
+              ),            ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('設置'),
               onTap: () {

@@ -11,13 +11,17 @@ void main() async {
   // 確保 Flutter 引擎初始化完成
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 先初始化 Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
-  // 不再需要初始化預設用戶，Firebase 會自動管理用戶
-  // await AuthService.initDefaultUser();
+  try {
+    // 先初始化 Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✅ Firebase 初始化成功');
+    print('🚀 應用程式準備啟動');
+  } catch (e) {
+    print('❌ Firebase 初始化失敗: $e');
+    // 即使 Firebase 初始化失敗，也要啟動應用程式
+  }
   
   runApp(const MyApp());
 }
