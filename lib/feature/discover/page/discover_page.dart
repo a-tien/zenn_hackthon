@@ -46,7 +46,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   // 景點類型定義
   final List<_SpotType> _spotTypes = [
     _SpotType('全選', Icons.select_all, '', []),
-    _SpotType('景點/觀光', Icons.location_on, 'icons/attraction_marker.svg', ['tourist_attraction', 'museum', 'art_gallery', 'aquarium', 'zoo', 'amusement_park', 'stadium']),
+    _SpotType('景點/觀光', Icons.location_on, 'icons/attraction_marker.svg', ['tourist_attraction', 'museum', 'art_gallery', 'aquarium', 'zoo', 'stadium','torist_attraction', 'landmark']),
     _SpotType('美食/餐廳', Icons.restaurant, 'icons/restaurant_marker.svg', ['restaurant', 'cafe', 'bakery', 'bar', 'meal_takeaway', 'meal_delivery']),
     _SpotType('購物', Icons.shopping_bag, 'icons/shopping_marker.svg', ['shopping_mall', 'store', 'clothing_store', 'electronics_store', 'book_store', 'jewelry_store', 'shoe_store', 'supermarket', 'convenience_store', 'department_store']),
     _SpotType('住宿', Icons.hotel, 'icons/hotel_marker.svg', ['lodging', 'rv_park', 'campground']),
@@ -108,7 +108,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
   // 獲取過濾後的景點列表
   List<FavoriteSpot> get _filteredSpots {
     final spots = _searchResults.isNotEmpty ? _searchResults : _currentSpots;
-    
+    print('[DEBUG] 所有景點類型:');
+    for (var s in spots) {
+      print('${s.name} - ${s.category}');
+    }
     // 如果選中全選，返回所有景點
     if (_selectedTypeIndexes.contains(0)) {
       return spots;
@@ -121,6 +124,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
         selectedKeywords.addAll(_spotTypes[index].keywords);
       }
     }
+
+    print('選取類型: $selectedKeywords');
+    print('景點類型: ${spots.map((e) => e.category).toList()}');
+
     
     // 過濾景點
     return spots.where((spot) {
@@ -215,7 +222,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
   void _initializeMarkers() {
     final filteredSpots = _filteredSpots;
-    
+  
     setState(() {
       _markers = filteredSpots.map((spot) {
         final markerAsset = _getMarkerAssetForCategory(spot.category);
@@ -235,6 +242,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         );
       }).toSet();
     });
+    
   }
 
   void _showSpotDetails(FavoriteSpot spot) {
@@ -791,30 +799,71 @@ class _DiscoverPageState extends State<DiscoverPage> {
     }
   }
 
+ getRadiusFromZoom(double zoom) {
+    if (zoom >= 16) return 500;
+    if (zoom >= 14) return 1000;
+    if (zoom >= 12) return 2000;
+    return 3000; // zoom 太小，保持最大搜尋半徑
+  }
+
+
   void _onMapCameraIdle() async {
-    if (_mapController == null) return;
-    final center = await _mapController!.getLatLng(
-      ScreenCoordinate(x: 200, y: 200),
-    );
-    // 避免重複搜尋同一區域
-    if (_lastMapCenter != null &&
-        (center.latitude - _lastMapCenter!.latitude).abs() < 0.001 &&
-        (center.longitude - _lastMapCenter!.longitude).abs() < 0.001) {
-      return;
-    }
-    _lastMapCenter = center;
-    setState(() => _isLoadingSpots = true);
-    final spots = await PlacesApiService.searchNearbyPlaces(
+  if (_mapController == null) return;
+
+  final size = MediaQuery.of(context).size;
+  final screenCenter = ScreenCoordinate(
+    x: (size.width / 2).round(),
+    y: (size.height / 2).round(),
+  );
+
+  final center = await _mapController!.getLatLng(screenCenter);
+
+  // 避免重複搜尋
+  if (_lastMapCenter != null &&
+      (center.latitude - _lastMapCenter!.latitude).abs() < 0.001 &&
+      (center.longitude - _lastMapCenter!.longitude).abs() < 0.001) {
+    return;
+  }
+
+  _lastMapCenter = center;
+  final zoomLevel = await _mapController!.getZoomLevel();
+  final radius = getRadiusFromZoom(zoomLevel);
+
+  setState(() => _isLoadingSpots = true);
+
+  // 🎯 依據使用者選擇的類別，決定要查詢的 Google types
+  final selectedTypes = _selectedTypeIndexes.contains(0)
+      ? _spotTypes
+          .skip(1) // 跳過「全選」
+          .expand((type) => type.keywords)
+          .toSet()
+          .toList()
+      : _selectedTypeIndexes
+          .map((index) => _spotTypes[index])
+          .expand((type) => type.keywords)
+          .toSet()
+          .toList();
+
+  try {
+    final spots = await PlacesApiService.searchNearbyPlacesMultipleTypes(
       latitude: center.latitude,
       longitude: center.longitude,
-      radius: 3000,
+      radius: radius,
+      types: selectedTypes,
     );
+
     setState(() {
       _currentSpots = spots;
       _isLoadingSpots = false;
     });
+
     _initializeMarkers();
+  } catch (e) {
+    print('Error fetching nearby places: $e');
+    setState(() => _isLoadingSpots = false);
   }
+}
+
 
   void _onSearchChanged(String value) async {
     if (value.trim().isEmpty) {
