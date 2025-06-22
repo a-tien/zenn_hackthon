@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../collection/models/favorite_collection.dart';
 import '../../collection/models/favorite_spot.dart';
+import '../../collection/services/favorite_service.dart';
+import '../../common/widgets/login_required_dialog.dart';
+import '../../common/services/firestore_service.dart';
 
 class AddToCollectionDialog extends StatefulWidget {
   final FavoriteSpot spot;
@@ -31,76 +32,91 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
     _newCollectionController.dispose();
     super.dispose();
   }
+  Future<void> _loadCollections() async {    if (!FirestoreService.isUserLoggedIn()) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => const LoginRequiredDialog(feature: '收藏功能'),
+        );
+      }
+      return;
+    }
 
-  Future<void> _loadCollections() async {
-    final prefs = await SharedPreferences.getInstance();
-    final collectionsJson = prefs.getStringList('collections') ?? [];
+    try {
+      final loadedCollections = await FavoriteService.getAllCollections();
+      
+      // 如果沒有收藏集，創建默認的"口袋清單"
+      if (loadedCollections.isEmpty) {        final defaultCollection = FavoriteCollection(
+          id: '', // 將由 Firestore 自動生成
+          name: '口袋清單',
+          description: '我想去的地方',
+          spotIds: [],
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
 
-    if (collectionsJson.isEmpty) {
-      // 創建默認的"口袋清單"
-      final defaultCollection = FavoriteCollection(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: '口袋清單',
-        description: '我想去的地方',
-        spotIds: [],
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+        final createdCollection = await FavoriteService.createCollection(defaultCollection);
 
-      await prefs.setStringList(
-        'collections',
-        [jsonEncode(defaultCollection.toJson())]
-      );
-
+        setState(() {
+          collections = [createdCollection];
+          selectedCollectionId = createdCollection.id;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          collections = loadedCollections;
+          selectedCollectionId = collections.isNotEmpty ? collections.first.id : null;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
       setState(() {
-        collections = [defaultCollection];
-        selectedCollectionId = defaultCollection.id;
         isLoading = false;
       });
-    } else {
-      setState(() {
-        collections = collectionsJson
-            .map((json) => FavoriteCollection.fromJson(jsonDecode(json)))
-            .toList();
-        selectedCollectionId = collections.isNotEmpty ? collections.first.id : null;
-        isLoading = false;
-      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('載入收藏集失敗: $e')),
+        );
+      }
     }
   }
+  Future<void> _addToCollection() async {    if (!FirestoreService.isUserLoggedIn()) {
+      showDialog(
+        context: context,
+        builder: (context) => const LoginRequiredDialog(feature: '收藏功能'),
+      );
+      return;
+    }
 
-  Future<void> _addToCollection() async {
     if (selectedCollectionId == null && !isCreatingNew) return;
 
-    final prefs = await SharedPreferences.getInstance();
-
-    // 如果是創建新收藏集
-    if (isCreatingNew) {
-      if (_newCollectionController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('請輸入收藏集名稱')),
+    try {
+      // 如果是創建新收藏集
+      if (isCreatingNew) {
+        if (_newCollectionController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('請輸入收藏集名稱')),
+          );
+          return;
+        }        // 創建新收藏集
+        final newCollection = FavoriteCollection(
+          id: '', // 將由 Firestore 自動生成
+          name: _newCollectionController.text.trim(),
+          description: '',
+          spotIds: [],
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
         );
-        return;
-      }
 
-      // 創建新收藏集
-      final newCollection = FavoriteCollection(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _newCollectionController.text.trim(),
-        description: '',
-        spotIds: [widget.spot.id],
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      // 保存新收藏集
-      final collectionsJson = prefs.getStringList('collections') ?? [];
-      collectionsJson.add(jsonEncode(newCollection.toJson()));
-      await prefs.setStringList('collections', collectionsJson);
-    } else {
-      // 添加到現有收藏集
-      final collectionIndex = collections.indexWhere((c) => c.id == selectedCollectionId);
-      if (collectionIndex >= 0) {
-        final collection = collections[collectionIndex];
+        // 保存新收藏集到 Firestore
+        final createdCollection = await FavoriteService.createCollection(newCollection);
+        
+        // 將景點添加到新收藏集
+        await FavoriteService.addSpotToCollection(createdCollection.id, widget.spot.id);
+      } else {
+        // 添加到現有收藏集
+        final collection = collections.firstWhere((c) => c.id == selectedCollectionId);
         
         // 檢查是否已存在
         if (collection.spotIds.contains(widget.spot.id)) {
@@ -112,35 +128,29 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
         }
 
         // 添加景點到收藏集
-        collection.spotIds.add(widget.spot.id);
-        collection.updatedAt = DateTime.now();
+        await FavoriteService.addSpotToCollection(selectedCollectionId!, widget.spot.id);
+      }
 
-        // 更新收藏集
-        final collectionsJson = prefs.getStringList('collections') ?? [];
-        collectionsJson[collectionIndex] = jsonEncode(collection.toJson());
-        await prefs.setStringList('collections', collectionsJson);
+      // 將景點保存到 favorites collection
+      await FavoriteService.addSpotToFavorites(widget.spot);
+
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isCreatingNew 
+            ? '已加入新收藏集「${_newCollectionController.text.trim()}」'
+            : '已加入收藏集「${collections.firstWhere((c) => c.id == selectedCollectionId).name}」'
+          ),
+        ),
+      );
+    } catch (e) {
+      print('Error adding to collection: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('加入收藏集失敗: $e')),
+        );
       }
     }
-
-    // 保存景點到收藏景點列表
-    final spotsJson = prefs.getStringList('favorite_spots') ?? [];
-    final existingSpots = spotsJson.map((json) => FavoriteSpot.fromJson(jsonDecode(json))).toList();
-    
-    // 檢查景點是否已存在
-    if (!existingSpots.any((spot) => spot.id == widget.spot.id)) {
-      spotsJson.add(jsonEncode(widget.spot.toJson()));
-      await prefs.setStringList('favorite_spots', spotsJson);
-    }
-
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(isCreatingNew 
-          ? '已加入新收藏集「${_newCollectionController.text.trim()}」'
-          : '已加入收藏集「${collections.firstWhere((c) => c.id == selectedCollectionId).name}」'
-        ),
-      ),
-    );
   }
 
   @override

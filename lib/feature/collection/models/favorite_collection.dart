@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class FavoriteCollection {
   String id;
   String name;
@@ -36,6 +38,33 @@ class FavoriteCollection {
       'spotIds': spotIds,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  // 從 Firestore 創建收藏集合
+  factory FavoriteCollection.fromFirestore(Map<String, dynamic> data, String docId) {
+    return FavoriteCollection(
+      id: docId,
+      name: data['name'] ?? '',
+      description: data['description'] ?? '',
+      spotIds: List<String>.from(data['spotIds'] ?? []),
+      createdAt: data['createdAt'] != null 
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
+      updatedAt: data['updatedAt'] != null 
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : DateTime.now(),
+    );
+  }
+
+  // 轉換為 Firestore 格式
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'description': description,
+      'spotIds': spotIds,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 

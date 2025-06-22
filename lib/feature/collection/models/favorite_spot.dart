@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class FavoriteSpot {
   String id;
   String name;
@@ -68,6 +70,48 @@ class FavoriteSpot {
       'latitude': latitude,
       'longitude': longitude,
       'addedAt': addedAt.toIso8601String(),
+    };
+  }
+
+  // 從Firestore文檔創建收藏景點
+  factory FavoriteSpot.fromFirestore(Map<String, dynamic> data) {
+    return FavoriteSpot(
+      id: data['id'] ?? '',
+      name: data['name'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+      address: data['address'] ?? '',
+      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
+      reviewCount: data['reviewCount'] ?? 0,
+      description: data['description'] ?? '',
+      category: data['category'] ?? '景點',
+      openingHours: data['openingHours'] ?? '',
+      website: data['website'] ?? '',
+      phone: data['phone'] ?? '',
+      latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (data['longitude'] as num?)?.toDouble() ?? 0.0,
+      addedAt: data['addedAt'] != null
+          ? (data['addedAt'] as Timestamp).toDate()
+          : DateTime.now(),
+    );
+  }
+
+  // 轉換為Firestore格式
+  Map<String, dynamic> toFirestore() {
+    return {
+      'id': id,
+      'name': name,
+      'imageUrl': imageUrl,
+      'address': address,
+      'rating': rating,
+      'reviewCount': reviewCount,
+      'description': description,
+      'category': category,
+      'openingHours': openingHours,
+      'website': website,
+      'phone': phone,
+      'latitude': latitude,
+      'longitude': longitude,
+      'addedAt': Timestamp.fromDate(addedAt),
     };
   }
 }

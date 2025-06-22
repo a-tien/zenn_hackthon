@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import '../models/itinerary.dart';
 import '../models/itinerary_day.dart';
-import '../models/spot.dart'; // 導入 Spot 類
 import '../models/destination.dart';
+import '../services/itinerary_service.dart';
+import '../../common/widgets/login_required_dialog.dart';
 import 'select_destinations_page.dart';
 
 class AddItineraryPage extends StatefulWidget {
@@ -19,6 +18,7 @@ class AddItineraryPage extends StatefulWidget {
 class _AddItineraryPageState extends State<AddItineraryPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final ItineraryService _itineraryService = ItineraryService();
   
   List<Destination> _selectedDestinations = [];
   
@@ -47,8 +47,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
-  }
-  Future<void> _saveItinerary() async {
+  }  Future<void> _saveItinerary() async {
     if (_formKey.currentState!.validate()) {
       // 檢查是否至少選擇了一個目的地
       if (_selectedDestinations.isEmpty) {
@@ -58,39 +57,56 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
         return;
       }
       
-      // 先創建行程實例
-      final itinerary = Itinerary(
-        name: _nameController.text,
-        useDateRange: _useDateRange,
-        days: _useDateRange ? _calculateDays() : _days,
-        startDate: _useDateRange ? _dateRange!.start : _startDate,
-        endDate: _useDateRange ? _dateRange!.end : _endDate,
-        destinations: _selectedDestinations,
-        transportation: _transportation,
-        travelType: _travelType,
-        // 初始化空的行程天數列表
-        itineraryDays: [],
-      );
-      
-      // 為每天創建 ItineraryDay 實例
-      for (int i = 0; i < itinerary.days; i++) {
-        itinerary.itineraryDays.add(
-          ItineraryDay(
-            dayNumber: i + 1,
-            transportation: _transportation,
-            spots: i == 0 ? _getDefaultSpots() : [], // 為第一天添加預設景點
-          ),
+      try {
+        // 先創建行程實例
+        final itinerary = Itinerary(
+          name: _nameController.text,
+          useDateRange: _useDateRange,
+          days: _useDateRange ? _calculateDays() : _days,
+          startDate: _useDateRange ? _dateRange!.start : _startDate,
+          endDate: _useDateRange ? _dateRange!.end : _endDate,
+          destinations: _selectedDestinations,
+          transportation: _transportation,
+          travelType: _travelType,
+          // 初始化空的行程天數列表
+          itineraryDays: [],
         );
-      }
+        
+        // 為每天創建 ItineraryDay 實例
+        for (int i = 0; i < itinerary.days; i++) {
+          itinerary.itineraryDays.add(
+            ItineraryDay(
+              dayNumber: i + 1,
+              transportation: _transportation,
+              spots: [], // 移除預設景點，現在全部通過加入行程功能添加
+            ),
+          );
+        }
 
-      final prefs = await SharedPreferences.getInstance();
-      final itinerariesJson = prefs.getStringList('itineraries') ?? [];
-      
-      itinerariesJson.add(jsonEncode(itinerary.toJson()));
-      await prefs.setStringList('itineraries', itinerariesJson);
-      
-      if (mounted) {
-        Navigator.pop(context, true);
+        // 使用 Firebase 保存行程
+        await _itineraryService.saveItinerary(itinerary);
+        
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (e.toString().contains('需要登入')) {
+          // 顯示登入提示對話框
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => const LoginRequiredDialog(feature: '建立行程'),
+            );
+          }
+          return;
+        }
+        
+        print('建立行程時出錯: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('建立失敗: $e')),
+          );
+        }
       }
     }
   }
@@ -127,57 +143,8 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
       setState(() {
         _dateRange = picked;
         _startDate = picked.start;
-        _endDate = picked.end;
-      });
+        _endDate = picked.end;      });
     }
-  }
-
-  // 獲取默認景點（用於示例）
-  List<Spot> _getDefaultSpots() {
-    return [
-      Spot(
-        id: '1',
-        name: '北海道大學',
-        imageUrl:
-            'https://images.weserv.nl/?url=daigakujc.jp/smart_phone/top_img/00038/2.jpg',
-        order: 1,
-        stayHours: 1,
-        stayMinutes: 30,
-        startTime: '09:00',
-        latitude: 43.0742,
-        longitude: 141.3405,
-        nextTransportation: '步行',
-        travelTimeMinutes: 15,
-      ),
-      Spot(
-        id: '2',
-        name: '札幌市時計台',
-        imageUrl:
-            'https://images.weserv.nl/?url=www.jigsaw.jp/img/goods/L/epo7738925113.jpg',
-        order: 2,
-        stayHours: 0,
-        stayMinutes: 45,
-        startTime: '11:00',
-        latitude: 43.0631,
-        longitude: 141.3536,
-        nextTransportation: '地鐵',
-        travelTimeMinutes: 20,
-      ),
-      Spot(
-        id: '3',
-        name: '狸小路商店街',
-        imageUrl:
-            'https://images.unsplash.com/photo-1591793826788-ae2ce68cca7c?auto=format&fit=crop&w=300&q=80',
-        order: 3,
-        stayHours: 2,
-        stayMinutes: 0,
-        startTime: '13:00',
-        latitude: 43.0562,
-        longitude: 141.3509,
-        nextTransportation: '',
-        travelTimeMinutes: 0,
-      ),
-    ];
   }
 
   // 構建目的地選擇區塊

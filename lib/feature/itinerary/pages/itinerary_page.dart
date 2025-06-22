@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/itinerary.dart';
+import '../services/itinerary_service.dart';
+import '../../common/widgets/login_required_dialog.dart';
 import 'add_itinerary_page.dart';
 import 'itinerary_detail_page.dart';
 import '../components/itinerary_card.dart';
@@ -16,27 +16,55 @@ class ItineraryPage extends StatefulWidget {
 class _ItineraryPageState extends State<ItineraryPage> {
   List<Itinerary> itineraries = [];
   bool isLoading = true;
+  final ItineraryService _itineraryService = ItineraryService();
 
   @override
   void initState() {
     super.initState();
     _loadItineraries();
   }
-
   Future<void> _loadItineraries() async {
-    final prefs = await SharedPreferences.getInstance();
     setState(() {
       isLoading = true;
     });
     
-    final itinerariesJson = prefs.getStringList('itineraries') ?? [];
-    
-    setState(() {
-      itineraries = itinerariesJson
-          .map((json) => Itinerary.fromJson(jsonDecode(json)))
-          .toList();
-      isLoading = false;
-    });
+    try {
+      final loadedItineraries = await _itineraryService.getAllItineraries();
+      
+      setState(() {
+        itineraries = loadedItineraries;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      
+      if (e.toString().contains('需要登入')) {
+        // 顯示登入提示對話框
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => LoginRequiredDialog(
+              feature: '查看行程列表',
+              onLoginPressed: () {
+                Navigator.of(context).pop();
+                // 重新載入資料
+                _loadItineraries();
+              },
+            ),
+          );
+        }
+        return;
+      }
+      
+      print('載入行程列表時出錯: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('載入失敗: $e')),
+        );
+      }
+    }
   }
 
   void _navigateToAddItinerary() async {

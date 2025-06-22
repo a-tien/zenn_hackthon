@@ -3,7 +3,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/favorite_spot.dart';
 import '../components/nearby_spot_card.dart';
 import '../components/add_to_itinerary_dialog.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../services/favorite_service.dart';
+import '../../discover/components/add_to_collection_dialog.dart';
 
 class SpotDetailPage extends StatefulWidget {
   final FavoriteSpot spot;
@@ -17,11 +18,25 @@ class SpotDetailPage extends StatefulWidget {
 class _SpotDetailPageState extends State<SpotDetailPage> {
   List<Map<String, dynamic>> nearbySpots = [];
   bool isLoading = true;
+  bool isFavorited = false;
+  bool isCheckingFavorite = true;
 
   @override
   void initState() {
     super.initState();
     _loadNearbySpots();
+    _checkFavoriteStatus();
+  }
+
+  // 檢查收藏狀態
+  Future<void> _checkFavoriteStatus() async {
+    final favorited = await FavoriteService.isSpotFavorited(widget.spot.id);
+    if (mounted) {
+      setState(() {
+        isFavorited = favorited;
+        isCheckingFavorite = false;
+      });
+    }
   }
 
   // 加載附近推薦景點
@@ -86,13 +101,37 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
       }
     }
   }
-
   // 加入行程
   void _addToItinerary() {
     showDialog(
       context: context,
       builder: (context) => AddToItineraryDialog(spot: widget.spot),
     );
+  }
+
+  // 切換收藏狀態
+  Future<void> _toggleFavorite() async {
+    if (isFavorited) {
+      // 取消收藏
+      await FavoriteService.removeSpotFromFavorites(widget.spot.id);
+      if (mounted) {
+        setState(() {
+          isFavorited = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('已取消收藏')),
+        );
+      }
+    } else {
+      // 加入收藏 - 顯示收藏集選擇對話框
+      showDialog(
+        context: context,
+        builder: (context) => AddToCollectionDialog(spot: widget.spot),
+      ).then((_) {
+        // 對話框關閉後重新檢查收藏狀態
+        _checkFavoriteStatus();
+      });
+    }
   }
 
   // 文字轉語音
@@ -210,11 +249,37 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                     ],
                   ),
 
-                  const SizedBox(height: 16),
-
-                  // 功能按鈕
+                  const SizedBox(height: 16),                  // 功能按鈕
                   Row(
                     children: [
+                      // 收藏按鈕
+                      Expanded(
+                        child: isCheckingFavorite
+                            ? const OutlinedButton(
+                                onPressed: null,
+                                child: SizedBox(
+                                  height: 16,
+                                  width: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : OutlinedButton.icon(
+                                icon: Icon(
+                                  isFavorited ? Icons.favorite : Icons.favorite_border,
+                                  color: isFavorited ? Colors.red : null,
+                                ),
+                                label: Text(isFavorited ? '已收藏' : '收藏'),
+                                onPressed: _toggleFavorite,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: isFavorited ? Colors.red : Colors.blueAccent,
+                                  side: BorderSide(
+                                    color: isFavorited ? Colors.red : Colors.blueAccent,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 12),
                       // 導航按鈕
                       Expanded(
                         child: OutlinedButton.icon(
@@ -228,7 +293,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 12),
                       // 加入行程按鈕
                       Expanded(
                         child: ElevatedButton.icon(

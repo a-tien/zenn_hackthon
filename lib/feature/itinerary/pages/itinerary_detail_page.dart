@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/itinerary.dart';
 import '../models/itinerary_day.dart';
 import '../models/itinerary_member.dart';
@@ -10,7 +8,12 @@ import '../components/transportation_segment.dart';
 import '../components/edit_itinerary_dialog.dart';
 import '../components/add_spot_options.dart';
 import '../components/day_transportation_dialog.dart';
-import '../components/change_transport_dialog.dart';
+import '../components/enhanced_change_transport_dialog.dart';
+import '../components/edit_stay_time_dialog.dart';
+import '../../collection/pages/spot_detail_page.dart';
+import '../../collection/services/favorite_service.dart';
+import '../services/itinerary_service.dart';
+import '../../common/widgets/login_required_dialog.dart';
 import 'trip_assistant_page.dart';
 import 'manage_itinerary_members_page.dart';
 import 'add_edit_itinerary_member_page.dart';
@@ -29,7 +32,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
   late TabController _tabController;
   late Itinerary _itinerary;
   bool _isMapView = false;
-
+  final ItineraryService _itineraryService = ItineraryService();
   @override
   void initState() {
     super.initState();
@@ -41,6 +44,11 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
     // 初始化頁籤控制器
     _initTabController();
+    
+    // 重新載入資料以確保顯示最新狀態
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _reloadItinerary();
+    });
   }
 
   // 將 TabController 初始化邏輯移到單獨的方法
@@ -66,127 +74,71 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
     _tabController.dispose();
     super.dispose();
   }
-
   // 創建默認的行程日數據
   void _createDefaultItineraryDays() {
     for (int i = 0; i < _itinerary.days; i++) {
       final day = ItineraryDay(
         dayNumber: i + 1,
         transportation: _itinerary.transportation,
-        spots: i == 0 ? _getDefaultSpots() : [], // 為第一天添加一些默認景點
+        spots: [], // 移除模擬數據，現在全部通過加入行程功能添加
       );
       _itinerary.itineraryDays.add(day);
     }
-  }
-
-  // 獲取默認景點（用於示例）
-  List<Spot> _getDefaultSpots() {
-    return [
-      Spot(
-        id: '1',
-        name: '北海道大學',
-        imageUrl:
-            'https://images.weserv.nl/?url=daigakujc.jp/smart_phone/top_img/00038/2.jpg',
-        order: 1,
-        stayHours: 1,
-        stayMinutes: 30,
-        startTime: '09:00',
-        latitude: 43.0742,
-        longitude: 141.3405,
-        nextTransportation: '步行',
-        travelTimeMinutes: 15,
-      ),
-      Spot(
-        id: '2',
-        name: '札幌市時計台',
-        imageUrl:
-            'https://images.weserv.nl/?url=www.jigsaw.jp/img/goods/L/epo7738925113.jpg',
-        order: 2,
-        stayHours: 0,
-        stayMinutes: 45,
-        startTime: '11:00',
-        latitude: 43.0631,
-        longitude: 141.3536,
-        nextTransportation: '地鐵',
-        travelTimeMinutes: 20,
-      ),
-      Spot(
-        id: '3',
-        name: '狸小路商店街',
-        imageUrl:
-            'https://images.unsplash.com/photo-1591793826788-ae2ce68cca7c?auto=format&fit=crop&w=300&q=80',
-        order: 3,
-        stayHours: 2,
-        stayMinutes: 0,
-        startTime: '13:00',
-        latitude: 43.0562,
-        longitude: 141.3509,
-        nextTransportation: '',
-        travelTimeMinutes: 0,
-      ),
-    ];
-  }
-
-  // 保存行程變更
+  }  // 保存行程變更
   Future<void> _saveItinerary() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final itinerariesJson = prefs.getStringList('itineraries') ?? [];
-
-      // 查找並更新現有行程
-      List<Map<String, dynamic>> itinerariesList = itinerariesJson
-          .map((json) => jsonDecode(json) as Map<String, dynamic>)
-          .toList();
-
-      bool found = false;
-      int index = -1;
-
-      // 根據行程名稱查找和更新
-      for (int i = 0; i < itinerariesList.length; i++) {
-        if (itinerariesList[i]['name'] == _itinerary.name) {
-          index = i;
-          found = true;
-          break;
-        }
-      }
-
-      // 避免在循環中直接修改，而是在找到後修改
-      if (found && index >= 0) {
-        itinerariesList[index] = _itinerary.toJson();
-      } else {
-        // 如果沒找到，添加一個新的
-        itinerariesList.add(_itinerary.toJson());
-      }
-
-      // 儲存更新後的行程列表
-      final updatedJson = itinerariesList
-          .map((item) => jsonEncode(item))
-          .toList();
-      await prefs.setStringList('itineraries', updatedJson);
-
-      return; // 正常完成
+      await _itineraryService.saveItinerary(_itinerary);
     } catch (e) {
+      if (e.toString().contains('需要登入')) {
+        // 顯示登入提示對話框
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => const LoginRequiredDialog(feature: '保存行程'),
+          );
+        }
+        return;
+      }
+      
       print('保存行程時出錯: $e');
-      throw e; // 重新拋出錯誤以便上層處理
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存失敗: $e')),
+        );
+      }
+      throw e;
     }
   }
-
   // 刪除行程
   Future<void> _deleteItinerary() async {
-    final prefs = await SharedPreferences.getInstance();
-    final itinerariesJson = prefs.getStringList('itineraries') ?? [];
-
-    // 過濾掉當前行程
-    final filteredItineraries = itinerariesJson.where((json) {
-      final item = jsonDecode(json);
-      return item['name'] != _itinerary.name;
-    }).toList();
-
-    // 儲存過濾後的行程列表
-    await prefs.setStringList('itineraries', filteredItineraries);
-
-    if (mounted) {
-      Navigator.pop(context, true); // 返回並通知更新
+    try {
+      if (_itinerary.id == null || _itinerary.id!.isEmpty) {
+        throw Exception('無法刪除：行程ID不存在');
+      }
+      
+      await _itineraryService.deleteItinerary(_itinerary.id!);
+      
+      if (mounted) {
+        Navigator.pop(context, true); // 返回並通知更新
+      }
+    } catch (e) {
+      if (e.toString().contains('需要登入')) {
+        // 顯示登入提示對話框
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => const LoginRequiredDialog(feature: '刪除行程'),
+          );
+        }
+        return;
+      }
+      
+      print('刪除行程時出錯: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('刪除失敗: $e')),
+        );
+      }
     }
   }
 
@@ -982,25 +934,24 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
         // 景點卡片和交通段落
         final spot = day.spots[index];
         return Column(
-          children: [
-            // 景點卡片
+          children: [            // 景點卡片
             SpotCard(
               spot: spot,
+              onTap: () => _handleSpotTap(spot), // 添加點擊處理
               onNavigate: () {
                 // 導航功能（暫未實現）
                 ScaffoldMessenger.of(
                   context,
                 ).showSnackBar(const SnackBar(content: Text('導航功能尚未實現')));
               },
-            ),
-
-            // 如果不是最後一個景點，顯示交通段落
+              onEditStayTime: () => _showEditStayTimeDialog(spot), // 添加編輯停留時間功能
+            ),// 如果不是最後一個景點，顯示交通段落
             if (index < day.spots.length - 1)
               TransportationSegment(
                 transportType: spot.nextTransportation,
                 duration: spot.travelTimeMinutes,
                 onTap: () {
-                  _showChangeTransportDialog(spot);
+                  _showChangeTransportDialog(spot, day.spots[index + 1]);
                 },
                 onAddSpot: () {
                   _showInsertSpotOptions(index + 1);
@@ -1028,24 +979,126 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
       backgroundColor: Colors.transparent,
       builder: (context) => const AddSpotOptions(isInsert: true),
     );
-  }
-
-  // 顯示更改交通方式對話框
-  void _showChangeTransportDialog(Spot spot) {
+  }  // 顯示更改交通方式對話框
+  void _showChangeTransportDialog(Spot originSpot, Spot destinationSpot) {
     showDialog(
       context: context,
-      builder: (context) => ChangeTransportDialog(
-        initialTransportation: spot.nextTransportation,
-        travelTimeMinutes: spot.travelTimeMinutes,
-        onUpdate: (transportation, minutes) {
+      builder: (context) => EnhancedChangeTransportDialog(
+        originSpot: originSpot,
+        destinationSpot: destinationSpot,
+        initialTransportation: originSpot.nextTransportation,
+        travelTimeMinutes: originSpot.travelTimeMinutes,
+        onUpdate: (transportation, minutes) async {
           setState(() {
-            spot.nextTransportation = transportation;
-            spot.travelTimeMinutes = minutes;
+            originSpot.nextTransportation = transportation;
+            originSpot.travelTimeMinutes = minutes;
           });
-          _saveItinerary();
+          
+          // 重新計算後續景點的開始時間
+          await _recalculateSubsequentTimes(originSpot, destinationSpot);
+          
+          await _saveItinerary();
+          // 強制刷新UI以確保顯示更新
+          if (mounted) {
+            setState(() {});
+          }
         },
       ),
     );
+  }
+  
+  // 重新計算後續景點的開始時間
+  Future<void> _recalculateSubsequentTimes(Spot originSpot, Spot destinationSpot) async {
+    // 找到當前景點所在的天數和位置
+    for (final day in _itinerary.itineraryDays) {
+      final spotIndex = day.spots.indexWhere((spot) => spot.id == originSpot.id);
+      if (spotIndex != -1 && spotIndex < day.spots.length - 1) {
+        // 從修改的景點開始，重新計算後續所有景點的時間
+        for (int i = spotIndex; i < day.spots.length - 1; i++) {
+          final currentSpot = day.spots[i];
+          final nextSpot = day.spots[i + 1];
+          
+          // 計算下一個景點的開始時間
+          final currentStartTime = _parseTime(currentSpot.startTime);
+          final stayDuration = Duration(
+            hours: currentSpot.stayHours,
+            minutes: currentSpot.stayMinutes,
+          );
+          final travelDuration = Duration(minutes: currentSpot.travelTimeMinutes);
+          
+          final nextStartTime = currentStartTime.add(stayDuration).add(travelDuration);
+          final timeString = '${nextStartTime.hour.toString().padLeft(2, '0')}:${nextStartTime.minute.toString().padLeft(2, '0')}';
+          
+          // 更新下一個景點的開始時間
+          day.spots[i + 1] = nextSpot.copyWith(startTime: timeString);
+        }
+        break;
+      }
+    }
+  }
+  
+  // 解析時間字符串為 DateTime
+  DateTime _parseTime(String timeString) {
+    final parts = timeString.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, hour, minute);
+  }
+
+  // 顯示編輯停留時間對話框
+  void _showEditStayTimeDialog(Spot spot) {
+    showDialog(
+      context: context,
+      builder: (context) => EditStayTimeDialog(
+        spot: spot,
+        onUpdate: (hours, minutes) async {
+          setState(() {
+            spot.stayHours = hours;
+            spot.stayMinutes = minutes;
+          });
+          
+          // 重新計算後續景點的開始時間
+          await _recalculateAllSubsequentTimes(spot);
+          
+          await _saveItinerary();
+          // 強制刷新UI以確保顯示更新
+          if (mounted) {
+            setState(() {});
+          }
+        },
+      ),
+    );
+  }
+  
+  // 重新計算指定景點之後所有景點的開始時間
+  Future<void> _recalculateAllSubsequentTimes(Spot changedSpot) async {
+    // 找到修改的景點所在的天數和位置
+    for (final day in _itinerary.itineraryDays) {
+      final spotIndex = day.spots.indexWhere((spot) => spot.id == changedSpot.id);
+      if (spotIndex != -1) {
+        // 從修改的景點開始，重新計算後續所有景點的時間
+        for (int i = spotIndex; i < day.spots.length - 1; i++) {
+          final currentSpot = day.spots[i];
+          final nextSpot = day.spots[i + 1];
+          
+          // 計算下一個景點的開始時間
+          final currentStartTime = _parseTime(currentSpot.startTime);
+          final stayDuration = Duration(
+            hours: currentSpot.stayHours,
+            minutes: currentSpot.stayMinutes,
+          );
+          final travelDuration = Duration(minutes: currentSpot.travelTimeMinutes);
+          
+          final nextStartTime = currentStartTime.add(stayDuration).add(travelDuration);
+          final timeString = '${nextStartTime.hour.toString().padLeft(2, '0')}:${nextStartTime.minute.toString().padLeft(2, '0')}';
+          
+          // 更新下一個景點的開始時間
+          day.spots[i + 1] = nextSpot.copyWith(startTime: timeString);
+        }
+        break;
+      }
+    }
   }
 
   // 顯示行程成員區塊
@@ -1282,6 +1335,67 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
     }
     
     await _saveItinerary();
+  }
+  // 重新載入行程資料
+  Future<void> _reloadItinerary() async {
+    try {
+      // 如果行程沒有ID，就不需要重新載入
+      if (_itinerary.id == null || _itinerary.id!.isEmpty) {
+        return;
+      }
+      
+      // 從Firestore獲取最新的行程列表
+      final itineraries = await _itineraryService.getAllItineraries();
+      
+      // 查找當前行程的最新資料
+      final updatedItinerary = itineraries.firstWhere(
+        (itinerary) => itinerary.id == _itinerary.id,
+        orElse: () => _itinerary, // 如果找不到就使用原本的
+      );
+      
+      if (mounted) {
+        setState(() {
+          _itinerary = updatedItinerary;
+        });
+      }
+    } catch (e) {
+      if (e.toString().contains('需要登入')) {
+        // 登入狀態改變了，但不顯示對話框，只是靜默處理
+        print('重新載入行程資料需要登入');
+        return;
+      }
+      print('重新載入行程資料時出錯: $e');
+    }
+  }
+
+  // 處理景點卡片點擊，跳轉到景點詳細頁面
+  Future<void> _handleSpotTap(Spot spot) async {
+    try {      // 根據 placeId 獲取詳細的景點資訊
+      final favoriteSpot = await FavoriteService.getFullSpotDetails(spot.id);
+      
+      if (favoriteSpot != null && mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SpotDetailPage(spot: favoriteSpot),
+          ),
+        );
+      } else {
+        // 如果無法獲取詳細資訊，顯示錯誤訊息
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('無法載入景點詳細資訊')),
+          );
+        }
+      }
+    } catch (e) {
+      print('載入景點詳細資訊時發生錯誤: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('載入景點資訊時發生錯誤')),
+        );
+      }
+    }
   }
 
   // 構建目的地顯示

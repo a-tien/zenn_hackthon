@@ -1,8 +1,10 @@
 import 'itinerary_day.dart';
 import 'itinerary_member.dart';
 import 'destination.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Itinerary {
+  String? id; // 新增Firestore文件ID
   String name;
   bool useDateRange;
   int days;
@@ -15,6 +17,7 @@ class Itinerary {
   List<ItineraryMember> members;
   
   Itinerary({
+    this.id,
     required this.name,
     required this.useDateRange,
     required this.days,
@@ -78,6 +81,7 @@ class Itinerary {
 
     // 創建行程實例
     Itinerary itinerary = Itinerary(
+      id: json['id'], // 解析ID
       name: json['name'],
       useDateRange: json['useDateRange'],
       days: json['days'],
@@ -106,6 +110,7 @@ class Itinerary {
     return itinerary;
   }  Map<String, dynamic> toJson() {
     return {
+      'id': id, // 包含ID
       'name': name,
       'useDateRange': useDateRange,
       'days': days,
@@ -148,5 +153,96 @@ class Itinerary {
       itineraryDays.removeLast();
     }
     return true;
+  }
+
+  /// Firebase Firestore 支援方法
+  
+  /// 從Firestore文件創建Itinerary實例
+  factory Itinerary.fromFirestore(Map<String, dynamic> data, String documentId) {
+    List<ItineraryDay> days = [];
+    if (data.containsKey('itineraryDays') && data['itineraryDays'] != null) {
+      days = (data['itineraryDays'] as List)
+          .map((day) => ItineraryDay.fromJson(day))
+          .toList();
+    }
+    
+    // 解析成員
+    List<ItineraryMember> members = [];
+    if (data.containsKey('members') && data['members'] != null) {
+      members = (data['members'] as List)
+          .map((member) => ItineraryMember.fromJson(member))
+          .toList();
+    }
+
+    // 解析目的地 - 支援舊格式的向後兼容
+    List<Destination> destinations = [];
+    if (data.containsKey('destinations') && data['destinations'] != null) {
+      // 新格式：目的地列表
+      destinations = (data['destinations'] as List)
+          .map((dest) => Destination.fromJson(dest))
+          .toList();
+    } else if (data.containsKey('destination') && data['destination'] != null) {
+      // 舊格式：單一目的地字串，轉換為 Destination 物件
+      final destinationName = data['destination'] as String;
+      destinations = [
+        Destination(
+          id: destinationName.toLowerCase().replaceAll(' ', '_'),
+          name: destinationName,
+          country: '未指定',
+          type: 'other',
+        ),
+      ];
+    }
+
+    // 創建行程實例
+    Itinerary itinerary = Itinerary(
+      id: documentId,
+      name: data['name'],
+      useDateRange: data['useDateRange'],
+      days: data['days'],
+      startDate: data['startDate'] is Timestamp 
+          ? (data['startDate'] as Timestamp).toDate()
+          : DateTime.parse(data['startDate']),
+      endDate: data['endDate'] is Timestamp 
+          ? (data['endDate'] as Timestamp).toDate()
+          : DateTime.parse(data['endDate']),
+      destinations: destinations,
+      transportation: data['transportation'],
+      travelType: data['travelType'],
+      itineraryDays: days,
+      members: members,
+    );
+    
+    // 如果沒有行程天數數據，則初始化行程天數
+    if (itinerary.itineraryDays.isEmpty && itinerary.days > 0) {
+      for (int i = 0; i < itinerary.days; i++) {
+        itinerary.itineraryDays.add(
+          ItineraryDay(
+            dayNumber: i + 1,
+            transportation: itinerary.transportation,
+            spots: [],
+          ),
+        );
+      }
+    }
+    
+    return itinerary;
+  }
+
+  /// 轉換為Firestore文件格式
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'useDateRange': useDateRange,
+      'days': days,
+      'startDate': Timestamp.fromDate(startDate),
+      'endDate': Timestamp.fromDate(endDate),
+      'destinations': destinations.map((dest) => dest.toJson()).toList(),
+      'destination': destination, // 保留舊格式兼容性
+      'transportation': transportation,
+      'travelType': travelType,
+      'itineraryDays': itineraryDays.map((day) => day.toJson()).toList(),
+      'members': members.map((member) => member.toJson()).toList(),
+    };
   }
 }

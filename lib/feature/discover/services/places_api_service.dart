@@ -80,7 +80,6 @@ class PlacesApiService {
       return [];
     }
   }
-
   /// 取得景點詳細資訊
   static Future<FavoriteSpot?> getPlaceDetails(String placeId) async {
     final url = Uri.parse('$_baseUrl/places/$placeId');
@@ -89,11 +88,12 @@ class PlacesApiService {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': _apiKey,
-        'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,rating,userRatingCount,types,photos,websiteUri,internationalPhoneNumber,regularOpeningHours',
+        'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,rating,userRatingCount,types,photos,websiteUri,internationalPhoneNumber,regularOpeningHours,editorialSummary',
       },
     );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+      print('📍 Places API 回傳資料：${jsonEncode(data)}');
       return _parsePlaceToFavoriteSpot(data);
     } else {
       print('Places API Detail Error: ${response.body}');

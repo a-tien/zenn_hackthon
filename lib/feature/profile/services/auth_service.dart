@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
+import '../../collection/models/favorite_collection.dart';
+import '../../collection/services/favorite_service.dart';
 
 // 註冊結果類
 class RegisterResult {
@@ -47,8 +49,7 @@ class AuthService {
       
       // 更新 Firebase Auth 用戶顯示名稱
       await userCredential.user!.updateDisplayName(name);
-      
-      // 建立 Firestore 使用者資料（加強錯誤提示）
+        // 建立 Firestore 使用者資料（加強錯誤提示）
       try {
         await FirebaseFirestore.instance.collection('users').doc(uid).set({
           'id': uid,
@@ -60,6 +61,23 @@ class AuthService {
           'createdAt': FieldValue.serverTimestamp(),
         });
         print('用戶註冊成功並建立 Firestore 資料: $uid');
+          // 建立預設的"口袋清單"收藏集
+        try {
+          final defaultCollection = FavoriteCollection(
+            id: '', // 將由 Firestore 自動生成
+            name: '口袋清單',
+            description: '我想去的地方',
+            spotIds: [],
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          
+          await FavoriteService.createCollection(defaultCollection);
+          print('預設收藏集"口袋清單"建立成功');
+        } catch (e) {
+          print('建立預設收藏集失敗: $e');
+          // 不影響註冊流程，只記錄錯誤
+        }
       } catch (e) {
         print('Firestore 建立個人資料失敗: $e');
       }

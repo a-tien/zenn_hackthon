@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/favorite_collection.dart';
 import '../models/favorite_spot.dart';
+import '../services/favorite_service.dart';
+import '../../common/widgets/login_required_dialog.dart';
 import '../components/collection_card.dart';
 import 'collection_detail_page.dart';
+import 'spot_detail_page.dart';
 
 class FavoritePage extends StatefulWidget {
   const FavoritePage({super.key});
@@ -15,6 +16,7 @@ class FavoritePage extends StatefulWidget {
 
 class _FavoritePageState extends State<FavoritePage> {
   List<FavoriteCollection> collections = [];
+  List<FavoriteSpot> favoriteSpots = [];
   bool isLoading = true;
   bool isMapView = false;
 
@@ -22,74 +24,51 @@ class _FavoritePageState extends State<FavoritePage> {
   void initState() {
     super.initState();
     _loadCollections();
-  }
-
-  // 加載收藏集
+  }  // 加載收藏集
   Future<void> _loadCollections() async {
-  final prefs = await SharedPreferences.getInstance();
-  setState(() {
-    isLoading = true;
-  });
-
-  // 從本地存儲中加載收藏集數據
-  final collectionsJson = prefs.getStringList('collections') ?? [];
-
-  if (collectionsJson.isEmpty) {
-    // 創建預設景點 - 北海道大學
-    final hokudaiSpot = FavoriteSpot(
-      id: 'spot_hokudai_001',
-      name: '北海道大學',
-      imageUrl: 'https://images.weserv.nl/?url=daigakujc.jp/smart_phone/top_img/00038/2.jpg',
-      address: '日本北海道札幌市北區北8条西5丁目',
-      rating: 4.5,
-      reviewCount: 1250,
-      description: '北海道大學是日本最著名的大學之一，校園內有美麗的白樺林道和古色古香的建築。秋季時紅葉環繞，景色特別美麗。',
-      category: '景點',
-      openingHours: '全天開放，建築內部需遵守各建築開放時間',
-      website: 'https://www.hokudai.ac.jp/',
-      phone: '+81-11-716-2111',
-      latitude: 43.0770474,
-      longitude: 141.3408576,
-      addedAt: DateTime.now(),
-    );
-    
-    // 保存預設景點
-    await prefs.setStringList(
-      'favorite_spots',
-      [jsonEncode(hokudaiSpot.toJson())]
-    );
-    
-    // 如果沒有收藏集，創建默認的"口袋清單"，並包含北海道大學
-    final defaultCollection = FavoriteCollection(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: '口袋清單',
-      description: '我想去的地方',
-      spotIds: [hokudaiSpot.id], // 添加北海道大學ID
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    // 保存默認收藏集
-    await prefs.setStringList(
-      'collections', 
-      [jsonEncode(defaultCollection.toJson())]
-    );
-    
     setState(() {
-      collections = [defaultCollection];
-      isLoading = false;
+      isLoading = true;
     });
-  } else {
-    setState(() {
-      collections = collectionsJson
-          .map((json) => FavoriteCollection.fromJson(jsonDecode(json)))
-          .toList();
-      isLoading = false;
-    });
-  }
-}
 
-  // 添加新收藏集
+    try {
+      // 載入收藏集合
+      final loadedCollections = await FavoriteService.getAllCollections();
+      
+      setState(() {
+        collections = loadedCollections;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      
+      if (e.toString().contains('需要登入')) {
+        // 顯示登入提示對話框
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => LoginRequiredDialog(
+              feature: '查看收藏',
+              onLoginPressed: () {
+                Navigator.of(context).pop();
+                // 重新載入資料
+                _loadCollections();
+              },
+            ),
+          );
+        }
+        return;
+      }
+      
+      print('載入收藏時出錯: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('載入失敗: $e')),
+        );
+      }
+    }
+  }  // 添加新收藏集
   void _addNewCollection() async {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
@@ -150,27 +129,42 @@ class _FavoritePageState extends State<FavoritePage> {
     );
 
     if (result != null) {
-      // 創建新收藏集
-      final newCollection = FavoriteCollection(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: result['name']!,
-        description: result['description']!,
-        spotIds: [],
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+      try {        // 創建新收藏集
+        final newCollection = FavoriteCollection(
+          id: '', // Firestore 會自動生成
+          name: result['name']!,
+          description: result['description']!,
+          spotIds: [],
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
 
-      // 保存到本地存儲
-      final prefs = await SharedPreferences.getInstance();
-      final collectionsJson = prefs.getStringList('collections') ?? [];
-      
-      collectionsJson.add(jsonEncode(newCollection.toJson()));
-      await prefs.setStringList('collections', collectionsJson);
-
-      // 更新狀態
-      setState(() {
-        collections.add(newCollection);
-      });
+        final createdCollection = await FavoriteService.createCollection(newCollection);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('已創建收藏集「${createdCollection.name}」')),
+          );
+          // 重新載入收藏集列表
+          _loadCollections();
+        }
+      } catch (e) {
+        if (e.toString().contains('需要登入')) {
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => const LoginRequiredDialog(feature: '創建收藏集'),
+            );
+          }
+          return;
+        }
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('創建收藏集失敗: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -193,8 +187,7 @@ class _FavoritePageState extends State<FavoritePage> {
             onPressed: _addNewCollection,
           ),
         ],
-      ),
-      body: isLoading
+      ),      body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : collections.isEmpty
               ? _buildEmptyState()
@@ -216,8 +209,7 @@ class _FavoritePageState extends State<FavoritePage> {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
+        children: [          const Icon(
             Icons.bookmark_border,
             size: 80,
             color: Colors.blueGrey,
@@ -282,25 +274,176 @@ class _FavoritePageState extends State<FavoritePage> {
       padding: const EdgeInsets.all(16),
       itemCount: collections.length,
       itemBuilder: (context, index) {
-        final collection = collections[index];
-        return CollectionCard(
+        final collection = collections[index];        return CollectionCard(
           collection: collection,
           onTap: () {
             // 導航到收藏集詳情頁面
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => CollectionDetailPage(
-                  collection: collection,
-                ),
+                builder: (context) => CollectionDetailPage(collection: collection),
               ),
-            ).then((_) {
-              // 返回時刷新數據
-              _loadCollections();
-            });
+            );
           },
         );
       },
     );
   }
+
+  Widget _buildFavoriteSpotsList() {
+    if (isMapView) {
+      // 地圖視圖 - 實際應用中需要使用地圖元件
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.map, size: 80, color: Colors.grey),
+            const SizedBox(height: 16),
+            const Text(
+              "地圖視圖",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text("此處將顯示收藏地點的地圖視圖", style: TextStyle(color: Colors.grey[600])),
+          ],
+        ),
+      );
+    }
+
+    // 列表視圖 - 顯示收藏的景點
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: favoriteSpots.length,
+      itemBuilder: (context, index) {
+        final spot = favoriteSpots[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(16),
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                spot.imageUrl.isNotEmpty ? spot.imageUrl : 'https://via.placeholder.com/60x60',
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 60,
+                    height: 60,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.place, color: Colors.grey),
+                  );
+                },
+              ),
+            ),
+            title: Text(
+              spot.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (spot.address.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    spot.address,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.star, color: Colors.amber, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      spot.rating.toStringAsFixed(1),
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '(${spot.reviewCount})',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 取消收藏按鈕
+                IconButton(
+                  icon: const Icon(Icons.favorite, color: Colors.red),
+                  onPressed: () => _removeFavorite(spot),
+                ),
+                // 查看詳情按鈕
+                IconButton(
+                  icon: const Icon(Icons.arrow_forward_ios),
+                  onPressed: () => _viewSpotDetail(spot),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 移除收藏
+  Future<void> _removeFavorite(FavoriteSpot spot) async {
+    try {
+      await FavoriteService.removeSpotFromFavorites(spot.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('已移除「${spot.name}」從收藏')),
+        );
+        // 重新載入收藏列表
+        _loadCollections();
+      }
+    } catch (e) {
+      if (e.toString().contains('需要登入')) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => const LoginRequiredDialog(feature: '移除收藏'),
+          );
+        }
+        return;
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('移除收藏失敗: $e')),
+        );
+      }
+    }
+  }
+
+  // 查看景點詳情
+  void _viewSpotDetail(FavoriteSpot spot) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SpotDetailPage(spot: spot),
+      ),
+    );
+  }
+
+  // ...existing code...
 }

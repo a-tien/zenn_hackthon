@@ -5,12 +5,14 @@ class FavoriteSpotCard extends StatelessWidget {
   final FavoriteSpot spot;
   final VoidCallback onDetailTap;
   final VoidCallback onAddToItinerary;
+  final VoidCallback? onRemove; // 可選的移除回調
 
   const FavoriteSpotCard({
     super.key,
     required this.spot,
     required this.onDetailTap,
     required this.onAddToItinerary,
+    this.onRemove,
   });
 
   @override
@@ -159,8 +161,7 @@ class FavoriteSpotCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 16),
-                  // 按鈕
+                  const SizedBox(height: 16),                  // 按鈕
                   Row(
                     children: [
                       // 詳細信息按鈕
@@ -192,6 +193,16 @@ class FavoriteSpotCard extends StatelessWidget {
                           child: const Text('加入行程'),
                         ),
                       ),
+                      // 移除按鈕（如果提供了回調）
+                      if (onRemove != null) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: onRemove,
+                          icon: const Icon(Icons.remove_circle_outline),
+                          color: Colors.red,
+                          tooltip: '從收藏集移除',
+                        ),
+                      ],
                     ],
                   ),
                 ],

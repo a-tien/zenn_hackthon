@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/favorite_collection.dart';
 import '../models/favorite_spot.dart';
 import '../components/favorite_spot_card.dart';
+import '../services/favorite_service.dart';
 import 'spot_detail_page.dart';
 import '../components/add_to_itinerary_dialog.dart';
+import '../../common/widgets/login_required_dialog.dart';
+import '../../common/services/firestore_service.dart';
 
 class CollectionDetailPage extends StatefulWidget {
   final FavoriteCollection collection;
@@ -30,34 +31,59 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
     super.initState();
     collection = widget.collection;
     _loadSpots();
-  }
-
-  // 加載收藏景點
+  }  // 加載收藏景點
   Future<void> _loadSpots() async {
-    final prefs = await SharedPreferences.getInstance();
+    if (!FirestoreService.isUserLoggedIn()) {      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => const LoginRequiredDialog(feature: '收藏功能'),
+        );
+      }
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
 
-    // 從本地存儲中加載景點數據
-    final spotsJson = prefs.getStringList('favorite_spots') ?? [];
-    final allSpots = spotsJson
-        .map((json) => FavoriteSpot.fromJson(jsonDecode(json)))
-        .toList();
+    try {
+      List<FavoriteSpot> collectionSpots = [];
+        // 從 Firestore 獲取景點詳情
+      for (String spotId in collection.spotIds) {
+        try {
+          final spot = await FavoriteService.getFullSpotDetails(spotId);
+          if (spot != null) {
+            collectionSpots.add(spot);
+          }
+        } catch (e) {
+          print('Error loading spot $spotId: $e');
+        }
+      }
 
-    // 過濾出該收藏集的景點
-    final collectionSpots = allSpots
-        .where((spot) => collection.spotIds.contains(spot.id))
-        .toList();
+      setState(() {
+        spots = collectionSpots;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading spots: $e');
+      setState(() {
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('載入景點失敗: $e')),
+        );
+      }
+    }
+  }  // 編輯收藏集信息
+  void _editCollection() async {    if (!FirestoreService.isUserLoggedIn()) {
+      showDialog(
+        context: context,
+        builder: (context) => const LoginRequiredDialog(feature: '編輯收藏集'),
+      );
+      return;
+    }
 
-    setState(() {
-      spots = collectionSpots;
-      isLoading = false;
-    });
-  }
-
-  // 編輯收藏集信息
-  void _editCollection() async {
     final TextEditingController nameController =
         TextEditingController(text: collection.name);
     final TextEditingController descriptionController =
@@ -113,48 +139,44 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
     );
 
     if (result != null) {
-      // 更新收藏集信息
-      final updatedCollection = collection.copyWith(
-        name: result['name']!,
-        description: result['description']!,
-        updatedAt: DateTime.now(),
-      );
+      try {
+        // 更新收藏集信息
+        final updatedCollection = collection.copyWith(
+          name: result['name']!,
+          description: result['description']!,
+          updatedAt: DateTime.now(),
+        );        // 保存到 Firestore
+        await FavoriteService.updateCollection(updatedCollection);
 
-      // 保存到本地存儲
-      await _updateCollection(updatedCollection);
+        setState(() {
+          collection = updatedCollection;
+        });
 
-      setState(() {
-        collection = updatedCollection;
-      });
-    }
-  }
-
-  // 更新收藏集
-  Future<void> _updateCollection(FavoriteCollection updatedCollection) async {
-    final prefs = await SharedPreferences.getInstance();
-    final collectionsJson = prefs.getStringList('collections') ?? [];
-
-    List<Map<String, dynamic>> collectionsData = collectionsJson
-        .map((json) => jsonDecode(json) as Map<String, dynamic>)
-        .toList();
-
-    // 找到並更新收藏集
-    for (int i = 0; i < collectionsData.length; i++) {
-      if (collectionsData[i]['id'] == updatedCollection.id) {
-        collectionsData[i] = updatedCollection.toJson();
-        break;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('收藏集更新成功')),
+          );
+        }
+      } catch (e) {
+        print('Error updating collection: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('更新收藏集失敗: $e')),          );
+        }
       }
     }
-
-    // 保存更新後的收藏集
-    await prefs.setStringList(
-      'collections',
-      collectionsData.map((data) => jsonEncode(data)).toList(),
-    );
   }
 
   // 刪除收藏集
   void _deleteCollection() async {
+    if (!FirestoreService.isUserLoggedIn()) {
+      showDialog(
+        context: context,
+        builder: (context) => const LoginRequiredDialog(feature: '刪除收藏集'),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -177,20 +199,79 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
     );
 
     if (confirmed == true) {
-      final prefs = await SharedPreferences.getInstance();
-      final collectionsJson = prefs.getStringList('collections') ?? [];
+      try {        // 從 Firestore 刪除收藏集
+        await FavoriteService.deleteCollection(collection.id);
+        
+        if (mounted) {
+          Navigator.pop(context); // 返回收藏主頁面
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('收藏集刪除成功')),
+          );
+        }
+      } catch (e) {
+        print('Error deleting collection: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('刪除收藏集失敗: $e')),
+          );
+        }
+      }
+    }
+  }  // 從收藏集移除景點
+  Future<void> _removeSpotFromCollection(FavoriteSpot spot) async {    if (!FirestoreService.isUserLoggedIn()) {
+      showDialog(
+        context: context,
+        builder: (context) => const LoginRequiredDialog(feature: '移除景點'),
+      );
+      return;
+    }
 
-      // 過濾掉要刪除的收藏集
-      final filteredCollections = collectionsJson.where((json) {
-        final data = jsonDecode(json) as Map<String, dynamic>;
-        return data['id'] != collection.id;
-      }).toList();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('確認移除'),
+          content: Text('確定要從「${collection.name}」移除「${spot.name}」嗎？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('移除'),
+            ),
+          ],
+        );
+      },
+    );
 
-      // 保存更新後的收藏集列表
-      await prefs.setStringList('collections', filteredCollections);
-
-      if (mounted) {
-        Navigator.pop(context); // 返回收藏主頁面
+    if (confirmed == true) {
+      try {        // 從 Firestore 移除景點
+        await FavoriteService.removeSpotFromCollection(collection.id, spot.id);
+        
+        // 更新本地狀態
+        setState(() {
+          spots.removeWhere((s) => s.id == spot.id);
+          collection = collection.copyWith(
+            spotIds: collection.spotIds.where((id) => id != spot.id).toList(),
+            updatedAt: DateTime.now(),
+          );
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('已從收藏集移除「${spot.name}」')),
+          );
+        }
+      } catch (e) {
+        print('Error removing spot from collection: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('移除景點失敗: $e')),
+          );
+        }
       }
     }
   }
@@ -292,8 +373,7 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
       padding: const EdgeInsets.all(16),
       itemCount: spots.length,
       itemBuilder: (context, index) {
-        final spot = spots[index];
-        return FavoriteSpotCard(
+        final spot = spots[index];        return FavoriteSpotCard(
           spot: spot,
           onDetailTap: () {
             // 導航到景點詳情頁面
@@ -307,6 +387,10 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
           onAddToItinerary: () {
             // 顯示加入行程對話框
             _showAddToItineraryDialog(spot);
+          },
+          onRemove: () {
+            // 從收藏集移除景點
+            _removeSpotFromCollection(spot);
           },
         );
       },

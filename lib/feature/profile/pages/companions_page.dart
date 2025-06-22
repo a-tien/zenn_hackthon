@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/travel_companion.dart';
 import '../services/companion_service.dart';
+import '../../common/widgets/login_required_dialog.dart';
 import 'add_edit_companion_page.dart';
 
 class CompanionsPage extends StatefulWidget {
@@ -31,11 +32,29 @@ class _CompanionsPageState extends State<CompanionsPage> {
       setState(() {
         _companions = companions;
         _isLoading = false;
-      });
-    } catch (e) {
+      });    } catch (e) {
       setState(() {
         _isLoading = false;
       });
+      
+      if (e.toString().contains('需要登入')) {
+        // 顯示登入提示對話框
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => LoginRequiredDialog(
+              feature: '管理旅伴',
+              onLoginPressed: () {
+                Navigator.of(context).pop();
+                // 重新載入資料
+                _loadCompanions();
+              },
+            ),
+          );
+        }
+        return;
+      }
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('加載旅伴數據失敗：$e')),
@@ -100,8 +119,18 @@ class _CompanionsPageState extends State<CompanionsPage> {
             const SnackBar(content: Text('旅伴已刪除')),
           );
           _loadCompanions();
+        }      } catch (e) {
+        if (e.toString().contains('需要登入')) {
+          // 顯示登入提示對話框
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => const LoginRequiredDialog(feature: '刪除旅伴'),
+            );
+          }
+          return;
         }
-      } catch (e) {
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('刪除旅伴失敗：$e')),

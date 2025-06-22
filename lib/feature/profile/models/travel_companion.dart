@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TravelCompanion {
   String id;
   String nickname;
@@ -20,12 +22,33 @@ class TravelCompanion {
     );
   }
 
+  // 從 Firestore 創建旅伴
+  factory TravelCompanion.fromFirestore(Map<String, dynamic> data, String docId) {
+    return TravelCompanion(
+      id: docId,
+      nickname: data['nickname'] ?? '',
+      ageGroup: data['ageGroup'] ?? '',
+      interests: List<String>.from(data['interests'] ?? []),
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'nickname': nickname,
       'ageGroup': ageGroup,
       'interests': interests,
+    };
+  }
+
+  // 轉換為 Firestore 格式
+  Map<String, dynamic> toFirestore() {
+    return {
+      'nickname': nickname,
+      'ageGroup': ageGroup,
+      'interests': interests,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     };
   }
 

@@ -4,13 +4,16 @@ import '../models/spot.dart';
 class SpotCard extends StatelessWidget {
   final Spot spot;
   final VoidCallback onNavigate;
+  final VoidCallback? onTap;
+  final VoidCallback? onEditStayTime; // 新增編輯停留時間回調
 
   const SpotCard({
     super.key,
     required this.spot,
     required this.onNavigate,
+    this.onTap,
+    this.onEditStayTime,
   });
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -18,9 +21,12 @@ class SpotCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // 順序指示器
           Container(
             width: 28,
@@ -90,20 +96,41 @@ class SpotCard extends StatelessWidget {
                     ),
                   ),
                   
-                  const SizedBox(height: 4),
-                  
-                  // 停留時間
-                  Text(
-                    spot.getFormattedStayTime(),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
+                  const SizedBox(height: 4),                  // 停留時間 (可點擊編輯)
+                  GestureDetector(
+                    onTap: onEditStayTime != null ? () {
+                      onEditStayTime!();
+                    } : null,
+                    behavior: HitTestBehavior.opaque, // 阻止事件冒泡
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: 14,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            spot.getFormattedStayTime(),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
+            ),          ),
           
           // 導航按鈕
           IconButton(
@@ -111,6 +138,7 @@ class SpotCard extends StatelessWidget {
             onPressed: onNavigate,
           ),
         ],
+        ),
       ),
     );
   }

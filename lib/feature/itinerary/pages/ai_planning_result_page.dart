@@ -4,8 +4,9 @@ import '../models/spot.dart';
 import '../models/itinerary_day.dart';
 import '../components/spot_card.dart';
 import '../components/transportation_segment.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../services/itinerary_service.dart';
+import '../../common/widgets/login_required_dialog.dart';
+import '../../common/services/firestore_service.dart';
 
 class AIPlanningResultPage extends StatefulWidget {
   final Itinerary originalItinerary;
@@ -26,6 +27,7 @@ class AIPlanningResultPage extends StatefulWidget {
 class _AIPlanningResultPageState extends State<AIPlanningResultPage> with TickerProviderStateMixin {
   late TabController _tabController;
   late Itinerary _resultItinerary;
+  final ItineraryService _itineraryService = ItineraryService();
 
   @override
   void initState() {
@@ -136,37 +138,17 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
       ),
     ];
   }
-
   // 保存並更新行程
   Future<void> _saveAndUpdateItinerary() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final itinerariesJson = prefs.getStringList('itineraries') ?? [];
+    if (!FirestoreService.isUserLoggedIn()) {      showDialog(
+        context: context,
+        builder: (context) => const LoginRequiredDialog(feature: '更新行程'),
+      );
+      return;
+    }
 
-      // 查找並更新現有行程
-      List<Map<String, dynamic>> itinerariesList = itinerariesJson
-          .map((json) => jsonDecode(json) as Map<String, dynamic>)
-          .toList();
-
-      int index = -1;
-      for (int i = 0; i < itinerariesList.length; i++) {
-        if (itinerariesList[i]['name'] == widget.originalItinerary.name) {
-          index = i;
-          break;
-        }
-      }
-
-      if (index >= 0) {
-        itinerariesList[index] = _resultItinerary.toJson();
-      } else {
-        itinerariesList.add(_resultItinerary.toJson());
-      }
-
-      // 儲存更新後的行程列表
-      final updatedJson = itinerariesList
-          .map((item) => jsonEncode(item))
-          .toList();
-      await prefs.setStringList('itineraries', updatedJson);
+    try {      // 使用 ItineraryService 更新行程
+      await _itineraryService.saveItinerary(_resultItinerary);
 
       // 顯示成功訊息
       if (mounted) {
@@ -174,11 +156,10 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
           const SnackBar(content: Text('行程已成功更新')),
         );
         
-        // 返回行程詳情頁
-        Navigator.popUntil(context, (route) => route.isFirst);
+        // 返回行程詳情頁        Navigator.popUntil(context, (route) => route.isFirst);
       }
     } catch (e) {
-      print('保存行程時出錯: $e');
+      print('Error updating itinerary: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('更新行程失敗: $e')),

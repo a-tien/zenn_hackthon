@@ -4,6 +4,7 @@ import 'feature/discover/page/discover_page.dart';
 import 'feature/itinerary/pages/itinerary_page.dart';
 import 'feature/profile/pages/profile_page.dart';
 import 'feature/profile/pages/login_page.dart'; // 導入登入頁面
+import 'feature/collection/services/favorite_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -17,10 +18,15 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     print('✅ Firebase 初始化成功');
+    
+    // 遷移收藏資料到新格式
+    await FavoriteService.migrateLegacyFavorites();
+    print('✅ 收藏資料遷移完成');
+    
     print('🚀 應用程式準備啟動');
   } catch (e) {
-    print('❌ Firebase 初始化失敗: $e');
-    // 即使 Firebase 初始化失敗，也要啟動應用程式
+    print('❌ 初始化失敗: $e');
+    // 即使初始化失敗，也要啟動應用程式
   }
   
   runApp(const MyApp());

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../itinerary/models/itinerary.dart';
 import '../../itinerary/pages/add_itinerary_page.dart';
+import '../../itinerary/services/itinerary_service.dart';
 import '../models/favorite_spot.dart';
 
 class AddToItineraryDialog extends StatefulWidget {
@@ -22,29 +21,17 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
   Map<int, int> selectedDays = {}; // 每個行程選擇的天數
   bool isLoading = true;
   int? expandedIndex; // 當前展開的行程索引
+  final ItineraryService _itineraryService = ItineraryService();
 
   @override
   void initState() {
     super.initState();
     _loadItineraries();
   }
-
   // 加載行程
   Future<void> _loadItineraries() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    // 從本地存儲中加載行程數據
-    final itinerariesJson = prefs.getStringList('itineraries') ?? [];
-    
-    if (itinerariesJson.isEmpty) {
-      setState(() {
-        itineraries = [];
-        isLoading = false;
-      });
-    } else {
-      final loadedItineraries = itinerariesJson
-          .map((json) => Itinerary.fromJson(jsonDecode(json)))
-          .toList();
+    try {
+      final loadedItineraries = await _itineraryService.getAllItineraries();
       
       // 初始化選擇的天數（默認為每個行程的最後一天）
       Map<int, int> initSelectedDays = {};
@@ -57,6 +44,12 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
       setState(() {
         itineraries = loadedItineraries;
         selectedDays = initSelectedDays;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('加載行程失敗: $e');
+      setState(() {
+        itineraries = [];
         isLoading = false;
       });
     }
@@ -84,24 +77,83 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
       selectedDays[itineraryIndex] = dayIndex;
     });
   }
-
   // 添加景點到選定的行程和天數
-  void _addToItinerary(int itineraryIndex) {
-    final dayIndex = selectedDays[itineraryIndex] ?? 0;
-    
-    // 這裡將實現實際的添加邏輯
-    // 包括添加到指定行程的指定天數
-    
-    // 暫時顯示提示
-    Navigator.pop(context); // 關閉對話框
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '已將${widget.spot.name}添加到${itineraries[itineraryIndex].name}的第${dayIndex + 1}天',
+  Future<void> _addToItinerary(int itineraryIndex) async {
+    try {
+      final dayIndex = selectedDays[itineraryIndex] ?? 0;
+      final itinerary = itineraries[itineraryIndex];
+      
+      // 顯示加載狀態
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
         ),
-      ),
-    );
+      );      // 檢查行程 ID 是否存在
+      if (itinerary.id == null || itinerary.id!.isEmpty) {
+        // 關閉加載對話框
+        if (mounted) Navigator.pop(context);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('行程 ID 不存在，無法加入景點')),
+          );
+        }
+        return;
+      }
+      
+      // 使用 ItineraryService 添加景點並計算路線
+      final updatedItinerary = await _itineraryService.addSpotToItineraryWithRoutes(
+        itinerary.id!, // 使用行程 ID 而不是名稱
+        dayIndex + 1, // dayIndex 是從0開始，但 addSpotToItineraryWithRoutes 期望從1開始
+        widget.spot,
+        calculateRoutes: true, // 啟用路線計算
+      );
+      
+      // 關閉加載對話框
+      if (mounted) Navigator.pop(context);
+      
+      // 關閉加入行程對話框
+      if (mounted) Navigator.pop(context);
+      
+      // 顯示結果
+      if (mounted) {
+        if (updatedItinerary != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '已成功將 ${widget.spot.name} 加入到 ${itinerary.name} 的第 ${dayIndex + 1} 天',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '加入行程失敗，景點可能已存在或發生其他錯誤',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // 關閉可能存在的加載對話框
+      if (mounted) Navigator.pop(context);
+      
+      print('添加景點到行程時發生錯誤: $e');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('加入行程時發生錯誤: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // 導航到創建新行程頁面
