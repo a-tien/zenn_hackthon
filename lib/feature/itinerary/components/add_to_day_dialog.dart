@@ -3,6 +3,7 @@ import '../models/itinerary.dart';
 import '../models/recommended_spot.dart';
 import '../models/spot.dart';
 import '../models/itinerary_day.dart';
+import '../services/itinerary_service.dart';
 
 class AddToDayDialog extends StatefulWidget {
   final Itinerary itinerary;
@@ -21,40 +22,30 @@ class AddToDayDialog extends StatefulWidget {
 class _AddToDayDialogState extends State<AddToDayDialog>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  int _selectedDayIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: widget.itinerary.days, vsync: this);
-    _tabController.addListener(_handleTabChange);
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
-  }
-
-  void _handleTabChange() {
-    if (_tabController.indexIsChanging) {
-      setState(() {
-        _selectedDayIndex = _tabController.index;
-      });
-    }
   }
 
   // 添加景點到行程
   void _addSpotToItinerary(int dayIndex, int position) async {
     // 獲取當前選定的行程日
-    final day = widget.itinerary.itineraryDays[dayIndex];
-
-    // 創建新的景點對象
+    final day = widget.itinerary.itineraryDays[dayIndex];    // 創建新的景點對象
     final newSpot = Spot(
       id: widget.spot.id,
       name: widget.spot.name,
       imageUrl: widget.spot.imageUrl,
+      address: widget.spot.district,      // 使用 district 作為 address
+      rating: widget.spot.rating,         // 加入評分
+      category: '推薦景點',                 // 設定固定分類
       order: position + 1, // 順序從1開始
       stayHours: 1, // 默認停留時間1小時
       stayMinutes: 0,
@@ -80,21 +71,32 @@ class _AddToDayDialogState extends State<AddToDayDialog>
       for (int i = position + 1; i < updatedSpots.length; i++) {
         updatedSpots[i] = updatedSpots[i].copyWith(order: i + 1);
       }
-    }
-
-    // 更新行程日
+    }    // 更新行程日
     widget.itinerary.itineraryDays[dayIndex] = ItineraryDay(
       dayNumber: day.dayNumber,
       transportation: day.transportation,
       spots: updatedSpots,
     );
 
-    // 保存行程（這裡模擬，實際應用中需要調用保存方法）
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    // 關閉對話框並返回成功結果
-    if (mounted) {
-      Navigator.pop(context, true);
+    // 保存行程到 Firestore
+    try {
+      final itineraryService = ItineraryService();
+      await itineraryService.saveItinerary(widget.itinerary);
+      
+      // 關閉對話框並返回成功結果
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      // 保存失敗，顯示錯誤訊息
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('保存失敗：$e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

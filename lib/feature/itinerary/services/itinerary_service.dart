@@ -132,12 +132,14 @@ class ItineraryService {
         final lastEndTime = _calculateEndTime(lastSpot);
         startTime = _addMinutesToTime(lastEndTime, 30); // 預設間隔30分鐘
       }
-      
-      // 創建新景點
+        // 創建新景點
       final newSpot = Spot(
         id: favoriteSpot.id,
         name: favoriteSpot.name,
         imageUrl: favoriteSpot.imageUrl,
+        address: favoriteSpot.address,     // 加入地址
+        rating: favoriteSpot.rating,       // 加入評分
+        category: favoriteSpot.category,   // 加入分類
         order: targetDay.spots.length + 1,
         stayHours: stayHours ?? 1,
         stayMinutes: stayMinutes ?? 30,

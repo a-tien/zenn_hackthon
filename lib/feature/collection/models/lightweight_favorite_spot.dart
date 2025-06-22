@@ -32,13 +32,12 @@ class LightweightFavoriteSpot {
       'addedAt': addedAt.toIso8601String(),
     };
   }
-
   // 從完整的FavoriteSpot創建輕量化版本
   factory LightweightFavoriteSpot.fromFavoriteSpot(FavoriteSpot spot) {
     return LightweightFavoriteSpot(
       placeId: spot.id, // FavoriteSpot的id就是placeId
       name: spot.name,
-      description: spot.description,
+      description: spot.category, // 使用 category 替代 description
       addedAt: spot.addedAt,
     );
   }

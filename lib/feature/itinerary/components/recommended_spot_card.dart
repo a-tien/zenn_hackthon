@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/itinerary.dart';
 import '../models/recommended_spot.dart';
-import '../models/spot.dart';
 import 'add_to_day_dialog.dart';
 
 class RecommendedSpotCard extends StatelessWidget {
@@ -107,9 +106,7 @@ class RecommendedSpotCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                  ),
-                  
-                  const SizedBox(height: 6),
+                  ),                  const SizedBox(height: 6),
                   
                   // 描述
                   Text(

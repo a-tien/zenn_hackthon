@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/favorite_spot.dart';
+import '../models/detailed_favorite_spot.dart';
 import '../components/nearby_spot_card.dart';
 import '../components/add_to_itinerary_dialog.dart';
 import '../services/favorite_service.dart';
 import '../../discover/components/add_to_collection_dialog.dart';
+import '../../discover/services/places_api_service.dart';
 
 class SpotDetailPage extends StatefulWidget {
   final FavoriteSpot spot;
@@ -20,12 +22,41 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
   bool isLoading = true;
   bool isFavorited = false;
   bool isCheckingFavorite = true;
-
+    // 詳細資訊狀態
+  DetailedFavoriteSpot? detailedSpot;
+  bool isLoadingDetails = true;
+  String? errorMessage;
   @override
   void initState() {
     super.initState();
+    _loadSpotDetails();
     _loadNearbySpots();
     _checkFavoriteStatus();
+  }
+    // 載入景點詳細資訊
+  Future<void> _loadSpotDetails() async {
+    try {
+      setState(() {
+        isLoadingDetails = true;
+        errorMessage = null;
+      });
+      
+      final details = await PlacesApiService.getDetailedPlaceInfo(widget.spot.id);
+      
+      if (mounted) {
+        setState(() {
+          detailedSpot = details;
+          isLoadingDetails = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoadingDetails = false;
+          errorMessage = '無法載入景點詳細資訊';
+        });
+      }
+    }
   }
 
   // 檢查收藏狀態
@@ -236,15 +267,9 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                       const SizedBox(width: 8),
                       Text(
                         '${widget.spot.rating}',
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: const TextStyle(                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '(${widget.spot.reviewCount})',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -311,27 +336,60 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                         ),
                       ),
                     ],
-                  ),
+                  ),                  const SizedBox(height: 24),
 
-                  const SizedBox(height: 24),
-
-                  // 景點信息區塊
-                  if (widget.spot.openingHours.isNotEmpty) ...[
-                    _buildInfoSection('營業時間', widget.spot.openingHours),
+                  // 景點詳細資訊區塊
+                  if (isLoadingDetails)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        errorMessage!,
+                        style: TextStyle(color: Colors.red[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else if (detailedSpot != null) ...[
+                    // 景點描述
+                    if (detailedSpot!.description.isNotEmpty) ...[
+                      _buildInfoSection('景點介紹', detailedSpot!.description),
+                      const Divider(),
+                    ],
+                    
+                    // 營業時間
+                    if (detailedSpot!.openingHours.isNotEmpty) ...[
+                      _buildInfoSection('營業時間', detailedSpot!.openingHours),
+                      const Divider(),
+                    ],
+                    
+                    // 聯絡資訊
+                    if (detailedSpot!.phone.isNotEmpty) ...[
+                      _buildInfoSection('電話', detailedSpot!.phone),
+                      const Divider(),
+                    ],
+                    
+                    // 網站
+                    if (detailedSpot!.website.isNotEmpty) ...[
+                      _buildInfoSection('網站', detailedSpot!.website),
+                      const Divider(),
+                    ],
+                    
+                    // 評論數量
+                    if (detailedSpot!.reviewCount > 0) ...[
+                      _buildInfoSection('評論數量', '${detailedSpot!.reviewCount} 則評論'),
+                      const Divider(),
+                    ],
+                  ] else ...[
+                    // 顯示基本資訊
+                    _buildInfoSection('地址', widget.spot.address),
                     const Divider(),
                   ],
-                  if (widget.spot.website.isNotEmpty) ...[
-                    _buildInfoSection('網站', widget.spot.website),
-                    const Divider(),
-                  ],
-                  if (widget.spot.phone.isNotEmpty) ...[
-                    _buildInfoSection('電話', widget.spot.phone),
-                    const Divider(),
-                  ],
-
-                  // 景點介紹
-                  _buildInfoSection('介紹', widget.spot.description),
-                  const Divider(),
 
                   // 附近推薦
                   const SizedBox(height: 16),

@@ -136,24 +136,14 @@ class FavoriteSpotCard extends StatelessWidget {
                       Text(
                         '${spot.rating}',
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '(${spot.reviewCount})',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
+                          fontSize: 14,                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  // 景點描述
+                  ),                  const SizedBox(height: 8),
+                  // 地址
                   Text(
-                    spot.description,
+                    spot.address,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -161,7 +151,7 @@ class FavoriteSpotCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 16),                  // 按鈕
+                  const SizedBox(height: 16),// 按鈕
                   Row(
                     children: [
                       // 詳細信息按鈕

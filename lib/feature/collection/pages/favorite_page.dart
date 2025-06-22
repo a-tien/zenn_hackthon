@@ -366,19 +366,10 @@ class _FavoritePageState extends State<FavoritePage> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.star, color: Colors.amber, size: 16),
-                    const SizedBox(width: 4),
+                    Icon(Icons.star, color: Colors.amber, size: 16),                    const SizedBox(width: 4),
                     Text(
                       spot.rating.toStringAsFixed(1),
                       style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '(${spot.reviewCount})',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
                     ),
                   ],
                 ),

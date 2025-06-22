@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../collection/models/favorite_spot.dart';
+import '../../collection/models/detailed_favorite_spot.dart';
 
 class PlacesApiService {
   static const String _apiKey = 'AIzaSyAnRvpAlNC5UdLoqUur8z75yej9s4D_L9c'; // 已填入你的 API KEY
@@ -99,9 +100,47 @@ class PlacesApiService {
       print('Places API Detail Error: ${response.body}');
       return null;
     }
+  }  /// 獲取包含完整詳細資訊的景點資料
+  static Future<DetailedFavoriteSpot?> getDetailedPlaceInfo(String placeId) async {
+    final url = Uri.parse('$_baseUrl/places/$placeId');
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': _apiKey,
+        'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,rating,userRatingCount,types,photos,websiteUri,internationalPhoneNumber,regularOpeningHours,editorialSummary',
+      },
+    );
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('📍 Places API 詳細資料：${jsonEncode(data)}');
+      return _parseToDetailedFavoriteSpot(data);
+    } else {
+      print('Places API Detail Error: ${response.body}');
+      return null;
+    }
   }
+
   /// 將 Google Place 轉換為 FavoriteSpot
   static FavoriteSpot _parsePlaceToFavoriteSpot(Map place) {
+      return FavoriteSpot(
+      id: place['id'] ?? '',
+      name: place['displayName']?['text'] ?? '',
+      imageUrl: (place['photos'] != null && place['photos'].isNotEmpty)
+          ? _getPhotoUrl(place['photos'][0]['name'])
+          : '',
+      address: place['formattedAddress'] ?? '',
+      rating: (place['rating'] ?? 0).toDouble(),
+      category: (place['types'] != null && place['types'].isNotEmpty) ? place['types'][0] : '',
+      latitude: place['location']?['latitude'] ?? 0.0,
+      longitude: place['location']?['longitude'] ?? 0.0,
+      addedAt: DateTime.now(),
+    );
+  }
+
+  /// 將 Google Place 轉換為 DetailedFavoriteSpot
+  static DetailedFavoriteSpot _parseToDetailedFavoriteSpot(Map place) {
     // 處理營業時間
     String openingHours = '';
     if (place['regularOpeningHours'] != null && 
@@ -116,8 +155,8 @@ class PlacesApiService {
         place['editorialSummary']['text'] != null) {
       description = place['editorialSummary']['text'];
     }
-    
-    return FavoriteSpot(
+
+    return DetailedFavoriteSpot(
       id: place['id'] ?? '',
       name: place['displayName']?['text'] ?? '',
       imageUrl: (place['photos'] != null && place['photos'].isNotEmpty)
@@ -125,15 +164,15 @@ class PlacesApiService {
           : '',
       address: place['formattedAddress'] ?? '',
       rating: (place['rating'] ?? 0).toDouble(),
-      reviewCount: place['userRatingCount'] ?? 0,
-      description: description,
       category: (place['types'] != null && place['types'].isNotEmpty) ? place['types'][0] : '',
-      openingHours: openingHours,
-      website: place['websiteUri'] ?? '',
-      phone: place['internationalPhoneNumber'] ?? '',
       latitude: place['location']?['latitude'] ?? 0.0,
       longitude: place['location']?['longitude'] ?? 0.0,
       addedAt: DateTime.now(),
+      description: description,
+      openingHours: openingHours,
+      website: place['websiteUri'] ?? '',
+      phone: place['internationalPhoneNumber'] ?? '',
+      reviewCount: place['userRatingCount'] ?? 0,
     );
   }
 

@@ -245,7 +245,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           icon: customIcon ?? BitmapDescriptor.defaultMarker, // 如果自訂圖標加載失敗，使用預設圖標
           infoWindow: InfoWindow(
             title: spot.name,
-            snippet: '⭐ ${spot.rating} (${spot.reviewCount}評論)\n點擊查看詳細資訊',
+            snippet: '⭐ ${spot.rating}\n點擊查看詳細資訊',
             onTap: () {
               _showSpotDetailsWithApi(spot);
             },
@@ -1196,12 +1196,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
                       fontSize: 14,
                     ),
                   ),
+                    const SizedBox(height: 8),
                   
-                  const SizedBox(height: 8),
-                  
-                  // 描述
+                  // 分類
                   Text(
-                    spot.description,
+                    spot.category,
                     style: TextStyle(
                       color: Colors.grey[800],
                       fontSize: 14,

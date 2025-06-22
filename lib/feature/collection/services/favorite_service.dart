@@ -3,6 +3,7 @@ import '../models/favorite_spot.dart';
 import '../models/lightweight_favorite_spot.dart';
 import '../models/favorite_collection.dart';
 import '../../common/services/firestore_service.dart';
+import '../../discover/services/places_api_service.dart';
 
 class FavoriteService {
   /// 檢查景點是否已收藏
@@ -23,7 +24,6 @@ class FavoriteService {
       return false;
     }
   }
-
   /// 添加景點到收藏
   static Future<void> addSpotToFavorites(FavoriteSpot spot) async {
     try {
@@ -32,15 +32,10 @@ class FavoriteService {
       final favoriteData = {
         'id': spot.id,
         'name': spot.name,
-        'description': spot.description,
         'imageUrl': spot.imageUrl,
         'address': spot.address,
         'rating': spot.rating,
-        'reviewCount': spot.reviewCount,
         'category': spot.category,
-        'openingHours': spot.openingHours,
-        'website': spot.website,
-        'phone': spot.phone,
         'latitude': spot.latitude,
         'longitude': spot.longitude,
         'addedAt': Timestamp.fromDate(spot.addedAt),
@@ -80,46 +75,12 @@ class FavoriteService {
       throw Exception('移除失敗：${FirestoreService.getErrorMessage(e)}');
     }
   }
-
   /// 獲取景點完整詳細資料
   static Future<FavoriteSpot?> getFullSpotDetails(String placeId) async {
     try {
-      FirestoreService.requireLogin();
-      
-      // 先從Firestore獲取基本資料
-      final doc = await FirestoreService.getFavoritesCollection()
-          .doc(placeId)
-          .get();
-      
-      if (!doc.exists) {
-        return null;
-      }
-      
-      final data = doc.data() as Map<String, dynamic>;
-      
-      // 從Firestore資料創建FavoriteSpot
-      return FavoriteSpot(
-        id: data['id'] ?? placeId,
-        name: data['name'] ?? '',
-        description: data['description'] ?? '',
-        imageUrl: data['imageUrl'] ?? '',
-        address: data['address'] ?? '',
-        rating: data['rating']?.toDouble() ?? 0.0,
-        reviewCount: data['reviewCount'] ?? 0,
-        category: data['category'] ?? '景點',
-        openingHours: data['openingHours'] ?? '',
-        website: data['website'] ?? '',
-        phone: data['phone'] ?? '',
-        latitude: data['latitude']?.toDouble() ?? 0.0,
-        longitude: data['longitude']?.toDouble() ?? 0.0,
-        addedAt: data['addedAt'] != null 
-            ? (data['addedAt'] as Timestamp).toDate()
-            : DateTime.now(),
-      );
+      // 直接使用 Places API 獲取景點詳細資訊
+      return await PlacesApiService.getPlaceDetails(placeId);
     } catch (e) {
-      if (e.toString().contains('此功能需要登入')) {
-        throw Exception('獲取收藏詳情需要登入');
-      }
       print('獲取景點詳細資料時發生錯誤: $e');
       return null;
     }
