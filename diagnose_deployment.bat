@@ -28,10 +28,16 @@ git branch -r
 echo.
 
 echo ==========================================
-echo 📋 3. 檢查 pubspec.yaml SDK 版本
+echo 📋 3. 檢查 pubspec.yaml 依賴版本
 echo ==========================================
 echo 🔧 SDK 版本設定：
 findstr "sdk:" pubspec.yaml
+echo.
+echo 🔧 flutter_lints 版本：
+findstr "flutter_lints:" pubspec.yaml
+echo.
+echo 🚀 測試依賴解析：
+flutter pub deps --no-dev
 echo.
 
 echo ==========================================
