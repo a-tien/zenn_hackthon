@@ -6,7 +6,7 @@ import '../models/spot.dart';
 /// 用於計算景點間的路線、距離和時間
 class GoogleRoutesService {
   static const String _baseUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
-  static const String _apiKey = 'AIzaSyAnRvpAlNC5UdLoqUur8z75yej9s4D_L9c';
+  static const String _apiKey = 'AIzaSyBHEcitEBtZ7ezjlRCRgS-Hk1fm2SSY4is';
   
   /// 計算兩個景點之間的路線資訊
   /// [origin] 起始景點

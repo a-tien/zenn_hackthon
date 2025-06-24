@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'dart:math' as math;
 import 'discover_destinations_page.dart';
 import '../../collection/pages/spot_detail_page.dart';
 import '../../collection/models/favorite_spot.dart';
@@ -39,27 +40,26 @@ class _DiscoverPageState extends State<DiscoverPage> {
   LatLng? _currentLocation;
   Circle? _currentLocationCircle;
   final TextEditingController _searchController = TextEditingController();
-  List<FavoriteSpot> _searchResults = [];
-  LatLng? _lastMapCenter;
+  List<FavoriteSpot> _searchResults = [];  LatLng? _lastMapCenter;
   Map<String, BitmapDescriptor> _customMarkers = {};
-
+    // 控制"探索這個區域"按鈕的顯示
+  bool _showExploreButton = false;
   // 景點類型定義
   final List<_SpotType> _spotTypes = [
     _SpotType('全選', Icons.select_all, '', []),
-    _SpotType('景點/觀光', Icons.location_on, 'icons/attraction_marker.svg', ['tourist_attraction', 'museum', 'art_gallery', 'aquarium', 'zoo', 'stadium','torist_attraction', 'landmark']),
+    _SpotType('景點/觀光', Icons.location_on, 'icons/attraction_marker.svg', ['tourist_attraction', 'museum', 'art_gallery', 'aquarium', 'zoo', 'stadium']),
     _SpotType('美食/餐廳', Icons.restaurant, 'icons/restaurant_marker.svg', ['restaurant', 'cafe', 'bakery', 'bar', 'meal_takeaway', 'meal_delivery']),
     _SpotType('購物', Icons.shopping_bag, 'icons/shopping_marker.svg', ['shopping_mall', 'store', 'clothing_store', 'electronics_store', 'book_store', 'jewelry_store', 'shoe_store', 'supermarket', 'convenience_store', 'department_store']),
     _SpotType('住宿', Icons.hotel, 'icons/hotel_marker.svg', ['lodging', 'rv_park', 'campground']),
     _SpotType('交通', Icons.train, 'icons/transport_marker.svg', ['train_station', 'subway_station', 'bus_station', 'light_rail_station', 'transit_station', 'airport', 'taxi_stand']),
     _SpotType('醫療/健康', Icons.local_hospital, 'icons/health_marker.svg', ['hospital', 'doctor', 'dentist', 'pharmacy', 'physiotherapist', 'veterinary_care', 'beauty_salon', 'hair_care', 'spa', 'gym']),
     _SpotType('教育/宗教', Icons.school, 'icons/education_marker.svg', ['school', 'primary_school', 'secondary_school', 'university', 'library', 'church', 'mosque', 'synagogue', 'hindu_temple']),
-    _SpotType('服務/金融', Icons.business, 'icons/service_marker.svg', ['bank', 'atm', 'post_office', 'insurance_agency', 'real_estate_agency', 'lawyer', 'accountant', 'travel_agency']),
+    _SpotType('服務/金融', Icons.business, 'icons/service_marker.svg', ['bank', 'atm', 'post_office', 'insurance_agency', 'real_estate_agency', 'lawyer', 'travel_agency']),
     _SpotType('娛樂/夜生活', Icons.nightlife, 'icons/entertainment_marker.svg', ['movie_theater', 'night_club', 'casino', 'bowling_alley']),
     _SpotType('汽車服務', Icons.car_repair, 'icons/car_service_marker.svg', ['gas_station', 'car_dealer', 'car_rental', 'car_repair', 'car_wash', 'parking']),
-    _SpotType('其他服務', Icons.build, 'icons/other_marker.svg', ['electrician', 'plumber', 'locksmith', 'painter', 'roofing_contractor', 'moving_company', 'storage', 'laundry']),
-  ];
+    _SpotType('其他服務', Icons.build, 'icons/other_marker.svg', ['electrician', 'plumber', 'locksmith', 'painter', 'roofing_contractor', 'moving_company', 'storage', 'laundry']),  ];
   
-  Set<int> _selectedTypeIndexes = {0}; // 預設全選
+  Set<int> _selectedTypeIndexes = {1, 2}; // 預設選擇前兩個：景點/觀光、美食/餐廳
 
   // 預設位置：札幌市中心
   static const CameraPosition _initialPosition = CameraPosition(
@@ -132,22 +132,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     // 過濾景點
     return spots.where((spot) {
       String lowerCategory = spot.category.toLowerCase();
-      return selectedKeywords.any((keyword) => lowerCategory.contains(keyword.toLowerCase()));
-    }).toList();
-  }
-  // 獲取地圖標記顏色
-  double _getMarkerHue(IconData iconData) {
-    if (iconData == Icons.restaurant) return BitmapDescriptor.hueOrange; // 橙色 - 餐廳
-    if (iconData == Icons.shopping_bag) return BitmapDescriptor.hueBlue; // 藍色 - 購物
-    if (iconData == Icons.hotel) return BitmapDescriptor.hueRose; // 玫瑰色 - 住宿
-    if (iconData == Icons.train) return BitmapDescriptor.hueAzure; // 青色 - 交通
-    if (iconData == Icons.local_hospital) return BitmapDescriptor.hueGreen; // 綠色 - 醫療/健康
-    if (iconData == Icons.school) return BitmapDescriptor.hueYellow; // 黃色 - 教育/宗教
-    if (iconData == Icons.business) return BitmapDescriptor.hueViolet; // 紫色 - 服務/金融
-    if (iconData == Icons.nightlife) return BitmapDescriptor.hueMagenta; // 洋紅色 - 娛樂/夜生活
-    if (iconData == Icons.car_repair) return BitmapDescriptor.hueCyan; // 青綠色 - 汽車服務
-    if (iconData == Icons.build) return BitmapDescriptor.hueOrange; // 橙色 - 其他服務
-    return BitmapDescriptor.hueRed; // 紅色 - 景點觀光(預設)
+      return selectedKeywords.any((keyword) => lowerCategory.contains(keyword.toLowerCase()));    }).toList();
   }
 
   Future<void> _loadCustomMarkers() async {
@@ -176,54 +161,102 @@ class _DiscoverPageState extends State<DiscoverPage> {
           print('Error loading default marker asset: $e');
         }
     }
-  }
-  void _loadSpots() async {
+  }  void _loadSpots() async {
     setState(() {
       _isLoadingSpots = true;
     });
 
     try {
-      List<FavoriteSpot> spots = [];
+      // 根據選中的類別獲取要查詢的類型
+      List<String> selectedTypes = [];
       
-      if (_selectedDestination != null && 
+      if (_selectedTypeIndexes.contains(0)) {
+        // 如果選中全選，獲取所有類型
+        selectedTypes = _spotTypes
+            .skip(1) // 跳過「全選」
+            .expand((type) => type.keywords)
+            .where((keyword) => [
+              'tourist_attraction', 'restaurant', 'cafe', 'shopping_mall',
+              'hospital', 'bank', 'gas_station', 'hotel', 'museum',
+              'store', 'lodging', 'train_station', 'subway_station',
+              'bus_station', 'airport', 'doctor', 'dentist', 'pharmacy',
+              'school', 'university', 'library', 'church', 'atm',
+              'post_office', 'movie_theater', 'night_club', 'car_dealer',
+              'car_rental', 'car_repair', 'car_wash', 'parking'
+            ].contains(keyword))
+            .toSet()
+            .toList();
+      } else {
+        // 根據選中的類別獲取對應的關鍵字
+        for (int index in _selectedTypeIndexes) {
+          if (index < _spotTypes.length) {
+            final spotType = _spotTypes[index];
+            final validKeywords = spotType.keywords.where((keyword) => [
+              'tourist_attraction', 'restaurant', 'cafe', 'shopping_mall',
+              'hospital', 'bank', 'gas_station', 'hotel', 'museum',
+              'store', 'lodging', 'train_station', 'subway_station',
+              'bus_station', 'airport', 'doctor', 'dentist', 'pharmacy',
+              'school', 'university', 'library', 'church', 'atm',
+              'post_office', 'movie_theater', 'night_club', 'car_dealer',
+              'car_rental', 'car_repair', 'car_wash', 'parking'
+            ].contains(keyword)).toList();
+            selectedTypes.addAll(validKeywords);
+          }
+        }
+        selectedTypes = selectedTypes.toSet().toList(); // 去重
+      }
+      
+      List<FavoriteSpot> spots = [];
+        if (_selectedDestination != null && 
           _selectedDestination!.latitude != null && 
           _selectedDestination!.longitude != null) {
-        // 使用 API 獲取該地區的多種類型景點
+        // 使用 API 獲取該地區的指定類型景點
         print('🌍 正在從API獲取 ${_selectedDestination!.name} 附近的景點...');
+        print('🎯 搜尋類型: $selectedTypes');
+        
+        // 如果有地圖控制器，使用可見範圍計算半徑，否則使用固定半徑
+        final radius = _mapController != null 
+            ? (await getRadiusFromVisibleRegion()).round()
+            : 15000;
+            
         spots = await PlacesApiService.searchNearbyPlacesMultipleTypes(
           latitude: _selectedDestination!.latitude!,
           longitude: _selectedDestination!.longitude!,
-          radius: 15000,
-          types: ['tourist_attraction', 'restaurant', 'cafe', 'shopping_mall', 
-                  'hospital', 'bank', 'gas_station', 'hotel', 'museum', 
-                  'amusement_park', 'train_station', 'airport'],
+          radius: radius,
+          types: selectedTypes,
         );
-        print('📍 API 返回 ${spots.length} 個景點');
+        print('📍 API 返回 ${spots.length} 個景點，搜尋半徑: ${radius}m');
       } else {
         // 沒有選擇目的地時，使用預設位置（札幌）搜尋
         print('🌍 正在從API獲取札幌附近的景點...');
+        print('🎯 搜尋類型: $selectedTypes');
+        
+        // 如果有地圖控制器，使用可見範圍計算半徑，否則使用固定半徑
+        final radius = _mapController != null 
+            ? (await getRadiusFromVisibleRegion()).round()
+            : 15000;
+            
         spots = await PlacesApiService.searchNearbyPlacesMultipleTypes(
           latitude: 43.0642, // 札幌市中心
           longitude: 141.3469,
-          radius: 15000,
-          types: ['tourist_attraction', 'restaurant', 'cafe', 'shopping_mall', 
-                  'hospital', 'bank', 'gas_station', 'hotel', 'museum', 
-                  'amusement_park', 'train_station', 'airport'],
-        );
-        print('📍 API 返回 ${spots.length} 個景點');
+          radius: radius,
+          types: selectedTypes,
+        );        
+        print('📍 API 返回 ${spots.length} 個景點，搜尋半徑: ${radius}m');
       }
 
       setState(() {
         _currentSpots = spots;
         _isLoadingSpots = false;
+        _showExploreButton = false; // 重置探索按鈕狀態
       });
       
       _initializeMarkers();
     } catch (e) {
-      print('❌ 載入景點時發生錯誤: $e');
-      setState(() {
+      print('❌ 載入景點時發生錯誤: $e');      setState(() {
         _currentSpots = [];
         _isLoadingSpots = false;
+        _showExploreButton = false; // 重置探索按鈕狀態
       });
       _initializeMarkers();
       
@@ -816,77 +849,190 @@ class _DiscoverPageState extends State<DiscoverPage> {
       }
     }
   }
+  // 根據地圖可見範圍計算搜尋半徑
+  Future<double> getRadiusFromVisibleRegion() async {
+    if (_mapController == null) return 3000;
+    
+    try {
+      final visibleRegion = await _mapController!.getVisibleRegion();
+      
+      // 計算可見區域的對角線距離
+      final northEast = visibleRegion.northeast;
+      final southWest = visibleRegion.southwest;
+      
+      // 使用 Haversine 公式計算距離（公里）
+      final distance = _calculateDistance(
+        southWest.latitude, southWest.longitude,
+        northEast.latitude, northEast.longitude,
+      );
+      
+      // 取可見區域對角線的一半作為搜尋半徑，轉換為公尺
+      // 限制最小 500m，最大 50km
+      final radiusKm = (distance / 2).clamp(0.5, 50.0);
+      final radiusMeters = radiusKm * 1000;
+      
+      print('🗺️ 可見區域對角線: ${distance.toStringAsFixed(2)}km, 搜尋半徑: ${radiusMeters.toInt()}m');
+      
+      return radiusMeters;
+    } catch (e) {
+      print('❌ 計算可見區域失敗: $e');
+      // 降級使用 zoom level
+      final zoom = await _mapController!.getZoomLevel();
+      return getRadiusFromZoom(zoom);
+    }
+  }
 
- getRadiusFromZoom(double zoom) {
+  // 降級方案：根據 zoom level 計算半徑
+  double getRadiusFromZoom(double zoom) {
     if (zoom >= 16) return 500;
     if (zoom >= 14) return 1000;
     if (zoom >= 12) return 2000;
-    return 3000; // zoom 太小，保持最大搜尋半徑
+    if (zoom >= 10) return 5000;
+    if (zoom >= 8) return 10000;
+    return 20000; // 更大的視圖範圍
   }
 
+  // Haversine 公式計算兩點間距離（公里）
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double earthRadius = 6371; // 地球半徑（公里）
+    
+    final dLat = _toRadians(lat2 - lat1);
+    final dLon = _toRadians(lon2 - lon1);
+    
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_toRadians(lat1)) * math.cos(_toRadians(lat2)) *
+        math.sin(dLon / 2) * math.sin(dLon / 2);
+    
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    
+    return earthRadius * c;
+  }
+
+  double _toRadians(double degrees) {
+    return degrees * (math.pi / 180);
+  }
 
   void _onMapCameraIdle() async {
-  if (_mapController == null) return;
+    if (_mapController == null) return;
 
-  final size = MediaQuery.of(context).size;
-  final screenCenter = ScreenCoordinate(
-    x: (size.width / 2).round(),
-    y: (size.height / 2).round(),
-  );
-
-  final center = await _mapController!.getLatLng(screenCenter);
-
-  // 避免重複搜尋
-  if (_lastMapCenter != null &&
-      (center.latitude - _lastMapCenter!.latitude).abs() < 0.001 &&
-      (center.longitude - _lastMapCenter!.longitude).abs() < 0.001) {
-    return;
-  }
-
-  _lastMapCenter = center;
-  final zoomLevel = await _mapController!.getZoomLevel();
-  final radius = getRadiusFromZoom(zoomLevel);
-
-  setState(() => _isLoadingSpots = true);
-
-  // 🎯 依據使用者選擇的類別，決定要查詢的 Google types
-  final selectedTypes = _selectedTypeIndexes.contains(0)
-      ? _spotTypes
-          .skip(1) // 跳過「全選」
-          .expand((type) => type.keywords)
-          .toSet()
-          .toList()
-      : _selectedTypeIndexes
-          .map((index) => _spotTypes[index])
-          .expand((type) => type.keywords)
-          .toSet()
-          .toList();
-
-  try {
-    final spots = await PlacesApiService.searchNearbyPlacesMultipleTypes(
-      latitude: center.latitude,
-      longitude: center.longitude,
-      radius: radius,
-      types: selectedTypes,
+    final size = MediaQuery.of(context).size;
+    final screenCenter = ScreenCoordinate(
+      x: (size.width / 2).round(),
+      y: (size.height / 2).round(),
     );
 
+    final center = await _mapController!.getLatLng(screenCenter);
+
+    // 避免重複處理相同位置
+    if (_lastMapCenter != null &&
+        (center.latitude - _lastMapCenter!.latitude).abs() < 0.001 &&
+        (center.longitude - _lastMapCenter!.longitude).abs() < 0.001) {
+      return;
+    }
+
+    // 如果已經加載過數據且移動了地圖，顯示探索按鈕
+    if (_currentSpots.isNotEmpty && _lastMapCenter != null) {
+      setState(() {
+        _showExploreButton = true;
+      });
+    }    _lastMapCenter = center;
+  }  // 新增方法：探索當前區域
+  void _exploreCurrentArea() async {
+    if (_mapController == null || _lastMapCenter == null) return;
+
+    // 優先使用可見區域計算半徑，降級使用 zoom level
+    final radius = await getRadiusFromVisibleRegion();
+
     setState(() {
-      _currentSpots = spots;
-      _isLoadingSpots = false;
-    });
+      _isLoadingSpots = true;
+      _showExploreButton = false; // 隱藏按鈕
+    });// 依據使用者選擇的類別，決定要查詢的 Google types
+    List<String> selectedTypes = [];
+    
+    if (_selectedTypeIndexes.contains(0)) {
+      // 如果選中全選，獲取所有類型
+      selectedTypes = _spotTypes
+          .skip(1) // 跳過「全選」
+          .expand((type) => type.keywords)
+          .where((keyword) => [
+            'tourist_attraction', 'restaurant', 'cafe', 'shopping_mall',
+            'hospital', 'bank', 'gas_station', 'hotel', 'museum',
+            'store', 'lodging', 'train_station', 'subway_station',
+            'bus_station', 'airport', 'doctor', 'dentist', 'pharmacy',
+            'school', 'university', 'library', 'church', 'atm',
+            'post_office', 'movie_theater', 'night_club', 'car_dealer',
+            'car_rental', 'car_repair', 'car_wash', 'parking'
+          ].contains(keyword))
+          .toSet()
+          .toList();
+    } else {
+      // 根據選中的類別獲取對應的關鍵字
+      for (int index in _selectedTypeIndexes) {
+        if (index < _spotTypes.length) {
+          final spotType = _spotTypes[index];
+          final validKeywords = spotType.keywords.where((keyword) => [
+            'tourist_attraction', 'restaurant', 'cafe', 'shopping_mall',
+            'hospital', 'bank', 'gas_station', 'hotel', 'museum',
+            'store', 'lodging', 'train_station', 'subway_station',
+            'bus_station', 'airport', 'doctor', 'dentist', 'pharmacy',
+            'school', 'university', 'library', 'church', 'atm',
+            'post_office', 'movie_theater', 'night_club', 'car_dealer',
+            'car_rental', 'car_repair', 'car_wash', 'parking'
+          ].contains(keyword)).toList();
+          selectedTypes.addAll(validKeywords);
+        }
+      }
+      selectedTypes = selectedTypes.toSet().toList(); // 去重
+    }
+    
+    print('🎯 將搜尋 ${selectedTypes.length} 種類型: $selectedTypes');
 
-    _initializeMarkers();
-  } catch (e) {
-    print('Error fetching nearby places: $e');
-    setState(() => _isLoadingSpots = false);
+    try {      final spots = await PlacesApiService.searchNearbyPlacesMultipleTypes(
+        latitude: _lastMapCenter!.latitude,
+        longitude: _lastMapCenter!.longitude,
+        radius: radius.round(),
+        types: selectedTypes,
+      );
+
+      setState(() {
+        _currentSpots = spots;
+        _isLoadingSpots = false;
+      });
+
+      _initializeMarkers();
+      
+      // 顯示成功訊息
+      if (mounted && spots.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('找到 ${spots.length} 個景點'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error fetching nearby places: $e');
+      setState(() => _isLoadingSpots = false);
+      
+      // 顯示錯誤訊息
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('載入景點失敗，請檢查網路連線或稍後再試'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
-}
-
 
   void _onSearchChanged(String value) async {
     if (value.trim().isEmpty) {
       setState(() {
         _searchResults = [];
+        _showExploreButton = false; // 重置探索按鈕狀態
       });
       return;
     }
@@ -898,6 +1044,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
     setState(() {
       _searchResults = spots;
+      _showExploreButton = false; // 重置探索按鈕狀態
     });
   }
   Future<void> _showSpotDetailsWithApi(FavoriteSpot spot) async {
@@ -1007,10 +1154,38 @@ class _DiscoverPageState extends State<DiscoverPage> {
                 ),
               ),
             ],
-          ),
-        ),
+          ),        ),
         const SizedBox(height: 12),
-        _buildTypeSelector(),
+        _buildTypeSelector(),        // 探索這個區域按鈕
+        if (_showExploreButton && _isMapView)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            child: Center(
+              child: ElevatedButton.icon(
+                onPressed: _isLoadingSpots ? null : _exploreCurrentArea,
+                icon: _isLoadingSpots 
+                    ? const SizedBox(
+                        width: 18, 
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.explore, size: 18),
+                label: Text(_isLoadingSpots ? '載入中...' : '探索這個區域'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isLoadingSpots ? Colors.grey : Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  elevation: 4,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -1030,8 +1205,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           final isSelected = _selectedTypeIndexes.contains(index);
           
           return GestureDetector(
-            onTap: () {
-              setState(() {
+            onTap: () {              setState(() {
                 if (index == 0) {
                   // 點擊全選
                   _selectedTypeIndexes = {0};
@@ -1047,6 +1221,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                     _selectedTypeIndexes.add(index);
                   }
                 }
+                _showExploreButton = false; // 重置探索按鈕狀態
               });
               _initializeMarkers(); // 更新地圖標記
             },
