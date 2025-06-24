@@ -47,17 +47,17 @@ class _DiscoverPageState extends State<DiscoverPage> {
   // 景點類型定義
   final List<_SpotType> _spotTypes = [
     _SpotType('全選', Icons.select_all, '', []),
-    _SpotType('景點/觀光', Icons.location_on, 'icons/attraction_marker.svg', ['tourist_attraction', 'museum', 'art_gallery', 'aquarium', 'zoo', 'stadium']),
-    _SpotType('美食/餐廳', Icons.restaurant, 'icons/restaurant_marker.svg', ['restaurant', 'cafe', 'bakery', 'bar', 'meal_takeaway', 'meal_delivery']),
-    _SpotType('購物', Icons.shopping_bag, 'icons/shopping_marker.svg', ['shopping_mall', 'store', 'clothing_store', 'electronics_store', 'book_store', 'jewelry_store', 'shoe_store', 'supermarket', 'convenience_store', 'department_store']),
-    _SpotType('住宿', Icons.hotel, 'icons/hotel_marker.svg', ['lodging', 'rv_park', 'campground']),
-    _SpotType('交通', Icons.train, 'icons/transport_marker.svg', ['train_station', 'subway_station', 'bus_station', 'light_rail_station', 'transit_station', 'airport', 'taxi_stand']),
-    _SpotType('醫療/健康', Icons.local_hospital, 'icons/health_marker.svg', ['hospital', 'doctor', 'dentist', 'pharmacy', 'physiotherapist', 'veterinary_care', 'beauty_salon', 'hair_care', 'spa', 'gym']),
-    _SpotType('教育/宗教', Icons.school, 'icons/education_marker.svg', ['school', 'primary_school', 'secondary_school', 'university', 'library', 'church', 'mosque', 'synagogue', 'hindu_temple']),
-    _SpotType('服務/金融', Icons.business, 'icons/service_marker.svg', ['bank', 'atm', 'post_office', 'insurance_agency', 'real_estate_agency', 'lawyer', 'travel_agency']),
-    _SpotType('娛樂/夜生活', Icons.nightlife, 'icons/entertainment_marker.svg', ['movie_theater', 'night_club', 'casino', 'bowling_alley']),
-    _SpotType('汽車服務', Icons.car_repair, 'icons/car_service_marker.svg', ['gas_station', 'car_dealer', 'car_rental', 'car_repair', 'car_wash', 'parking']),
-    _SpotType('其他服務', Icons.build, 'icons/other_marker.svg', ['electrician', 'plumber', 'locksmith', 'painter', 'roofing_contractor', 'moving_company', 'storage', 'laundry']),  ];
+    _SpotType('景點/觀光', Icons.location_on, 'icons/attraction_marker.png', ['tourist_attraction', 'museum', 'art_gallery', 'aquarium', 'zoo', 'stadium']),
+    _SpotType('美食/餐廳', Icons.restaurant, 'icons/restaurant_marker.png', ['restaurant', 'cafe', 'bakery', 'bar', 'meal_takeaway', 'meal_delivery']),
+    _SpotType('購物', Icons.shopping_bag, 'icons/shopping_marker.png', ['shopping_mall', 'store', 'clothing_store', 'electronics_store', 'book_store', 'jewelry_store', 'shoe_store', 'supermarket', 'convenience_store', 'department_store']),
+    _SpotType('住宿', Icons.hotel, 'icons/hotel_marker.png', ['lodging', 'rv_park', 'campground']),
+    _SpotType('交通', Icons.train, 'icons/transport_marker.png', ['train_station', 'subway_station', 'bus_station', 'light_rail_station', 'transit_station', 'airport', 'taxi_stand']),
+    _SpotType('醫療/健康', Icons.local_hospital, 'icons/health_marker.png', ['hospital', 'doctor', 'dentist', 'pharmacy', 'physiotherapist', 'veterinary_care', 'beauty_salon', 'hair_care', 'spa', 'gym']),
+    _SpotType('教育/宗教', Icons.school, 'icons/education_marker.png', ['school', 'primary_school', 'secondary_school', 'university', 'library', 'church', 'mosque', 'synagogue', 'hindu_temple']),
+    _SpotType('服務/金融', Icons.business, 'icons/service_marker.png', ['bank', 'atm', 'post_office', 'insurance_agency', 'real_estate_agency', 'lawyer', 'travel_agency']),
+    _SpotType('娛樂/夜生活', Icons.nightlife, 'icons/entertainment_marker.png', ['movie_theater', 'night_club', 'casino', 'bowling_alley']),
+    _SpotType('汽車服務', Icons.car_repair, 'icons/car_service_marker.png', ['gas_station', 'car_dealer', 'car_rental', 'car_repair', 'car_wash', 'parking']),
+    _SpotType('其他服務', Icons.build, 'icons/other_marker.png', ['electrician', 'plumber', 'locksmith', 'painter', 'roofing_contractor', 'moving_company', 'storage', 'laundry']),  ];
   
   Set<int> _selectedTypeIndexes = {1, 2}; // 預設選擇前兩個：景點/觀光、美食/餐廳
 
