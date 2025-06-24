@@ -9,7 +9,7 @@ on:
     branches: 
       - main
       - master
-  workflow_dispatch:  # 允許手動觸發
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -18,7 +18,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      - name: Setup Flutter
+    
+    - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
         flutter-version: '3.24.0'
