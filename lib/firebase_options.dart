@@ -41,49 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCB-1YhS0ZaKYfYwKdZ_fDrTa9a1yDShRA',
-    appId: '1:1088581851074:web:d9bb41ec8ed18ce909a85b',
-    messagingSenderId: '1088581851074',
-    projectId: 'travel-plan-caba3',
-    authDomain: 'travel-plan-caba3.firebaseapp.com',
-    storageBucket: 'travel-plan-caba3.firebasestorage.app',
-    measurementId: 'G-M1D88NRVJ1',
+    apiKey: 'AIzaSyCBoXdJd1tgtlMlT22tZsKNKMAUeuV4D3g',
+    appId: '1:774572899941:web:436a3e5c1fabe5053c908c',
+    messagingSenderId: '774572899941',
+    projectId: 'hackyoyo-28ad2',
+    authDomain: 'hackyoyo-28ad2.firebaseapp.com',
+    storageBucket: 'hackyoyo-28ad2.firebasestorage.app',
+    measurementId: 'G-19D8Y6BDRB',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAtw3VRkq3RUZvV2YiIbtRsnZihLIFMA30',
-    appId: '1:1088581851074:android:ea187c5edbb37a4909a85b',
-    messagingSenderId: '1088581851074',
-    projectId: 'travel-plan-caba3',
-    storageBucket: 'travel-plan-caba3.firebasestorage.app',
+    apiKey: 'AIzaSyBUIQ5iEyVLV9I1AOxvQXOpLKO5zu2ee1A',
+    appId: '1:774572899941:android:e941bdaab01a333a3c908c',
+    messagingSenderId: '774572899941',
+    projectId: 'hackyoyo-28ad2',
+    storageBucket: 'hackyoyo-28ad2.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDVW_M841a1I2u69yW1fgpdf_GCO1s8zQo',
-    appId: '1:1088581851074:ios:fdf532feea7c0da009a85b',
-    messagingSenderId: '1088581851074',
-    projectId: 'travel-plan-caba3',
-    storageBucket: 'travel-plan-caba3.firebasestorage.app',
+    apiKey: 'AIzaSyAHTpXfqKULGfdUJHwduAupyDPfQME6X2I',
+    appId: '1:774572899941:ios:1d5588173e33f73a3c908c',
+    messagingSenderId: '774572899941',
+    projectId: 'hackyoyo-28ad2',
+    storageBucket: 'hackyoyo-28ad2.firebasestorage.app',
     iosBundleId: 'com.example.myApp1',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDVW_M841a1I2u69yW1fgpdf_GCO1s8zQo',
-    appId: '1:1088581851074:ios:fdf532feea7c0da009a85b',
-    messagingSenderId: '1088581851074',
-    projectId: 'travel-plan-caba3',
-    storageBucket: 'travel-plan-caba3.firebasestorage.app',
+    apiKey: 'AIzaSyAHTpXfqKULGfdUJHwduAupyDPfQME6X2I',
+    appId: '1:774572899941:ios:1d5588173e33f73a3c908c',
+    messagingSenderId: '774572899941',
+    projectId: 'hackyoyo-28ad2',
+    storageBucket: 'hackyoyo-28ad2.firebasestorage.app',
     iosBundleId: 'com.example.myApp1',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCB-1YhS0ZaKYfYwKdZ_fDrTa9a1yDShRA',
-    appId: '1:1088581851074:web:7f39c5b4948ee13f09a85b',
-    messagingSenderId: '1088581851074',
-    projectId: 'travel-plan-caba3',
-    authDomain: 'travel-plan-caba3.firebaseapp.com',
-    storageBucket: 'travel-plan-caba3.firebasestorage.app',
-    measurementId: 'G-6SCXPRQV8V',
+    apiKey: 'AIzaSyCBoXdJd1tgtlMlT22tZsKNKMAUeuV4D3g',
+    appId: '1:774572899941:web:daabb470febf16ed3c908c',
+    messagingSenderId: '774572899941',
+    projectId: 'hackyoyo-28ad2',
+    authDomain: 'hackyoyo-28ad2.firebaseapp.com',
+    storageBucket: 'hackyoyo-28ad2.firebasestorage.app',
+    measurementId: 'G-ZE3343DKCX',
   );
 
 }

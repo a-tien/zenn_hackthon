@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1088581851074",
-    "project_id": "travel-plan-caba3",
-    "storage_bucket": "travel-plan-caba3.firebasestorage.app"
+    "project_number": "774572899941",
+    "project_id": "hackyoyo-28ad2",
+    "storage_bucket": "hackyoyo-28ad2.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1088581851074:android:ea187c5edbb37a4909a85b",
+        "mobilesdk_app_id": "1:774572899941:android:e941bdaab01a333a3c908c",
         "android_client_info": {
           "package_name": "com.example.my_app_1"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAtw3VRkq3RUZvV2YiIbtRsnZihLIFMA30"
+          "current_key": "AIzaSyBUIQ5iEyVLV9I1AOxvQXOpLKO5zu2ee1A"
         }
       ],
       "services": {
