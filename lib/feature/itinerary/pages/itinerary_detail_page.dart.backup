@@ -42,8 +42,6 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
   GoogleMapController? _mapController;
   Set<Marker> _markers = {};
   Map<int, BitmapDescriptor> _numberMarkers = {};
-  int _currentMapDayIndex = 0; // 追蹤當前地圖顯示的天數
-  bool _isMapReady = false; // 追蹤地圖是否已經準備好
   @override
   void initState() {
     super.initState();
@@ -56,13 +54,13 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
     // 初始化頁籤控制器
     _initTabController();
     
+    // 初始化編號標記
+    _createNumberMarkers();
+    
     // 重新載入資料以確保顯示最新狀態
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reloadItinerary();
     });
-    
-    // 初始化編號標記
-    _initializeNumberMarkers();
   }
 
   // 將 TabController 初始化邏輯移到單獨的方法
@@ -73,43 +71,36 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 處理頁籤變化
   void _handleTabChange() {
-    // 當頁籤變化時，總是觸發重建以更新 FloatingActionButton 的顯示狀態
-    if (mounted) {
-      print('Tab changed to index: ${_tabController.index}');
-      setState(() {
-        // 更新當前地圖顯示的天數
-        if (_tabController.index > 0) {
-          _currentMapDayIndex = _tabController.index - 1;
-          print('Map day index updated to: $_currentMapDayIndex');
-
-          // 如果當前是地圖視圖且地圖已經準備好，才更新地圖
-          if (_isMapView && _isMapReady && _mapController != null) {
-            // 只更新標記，不調整視角（避免 web 版本的問題）
-            _createMarkersForDay(_currentMapDayIndex);
-          } else if (_isMapView) {
-            // 如果地圖還沒準備好，只更新標記
-            _createMarkersForDay(_currentMapDayIndex);
+    // 只有當頁籤真的變化時才更新狀態
+    if (_tabController.indexIsChanging) {
+      // 如果當前是地圖視圖且不在概覽頁籤，更新地圖標記和視角
+      if (_isMapView && _tabController.index > 0) {
+        final currentDayIndex = _tabController.index - 1;
+        setState(() {
+          // 立即更新標記
+          _createMarkersForDay(currentDayIndex);
+        });
+        
+        // 延遲調整地圖視角
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _mapController != null) {
+            _fitMapToSpots(currentDayIndex);
           }
-        }
-      });
+        });
+      }
     }
   }
 
   @override
   void dispose() {
-    // 確保在 dispose 前移除監聽器並清理資源
+    // 確保在 dispose 前移除監聽器並正確釋放資源
     try {
       _tabController.removeListener(_handleTabChange);
     } catch (e) {
       // 忽略已經釋放的 controller 錯誤
     }
     _tabController.dispose();
-    
-    // 清理地圖相關資源
-    _isMapReady = false;
     _mapController?.dispose();
-    _mapController = null;
-    
     super.dispose();
   }
   // 創建默認的行程日數據
@@ -121,6 +112,141 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
         spots: [], // 移除模擬數據，現在全部通過加入行程功能添加
       );
       _itinerary.itineraryDays.add(day);
+    }
+  }
+
+  // 創建編號標記
+  Future<void> _createNumberMarkers() async {
+    for (int i = 1; i <= 20; i++) {
+      final markerIcon = await _createNumberedMarker(i);
+      _numberMarkers[i] = markerIcon;
+    }
+  }
+
+  // 創建帶編號的標記圖標
+  Future<BitmapDescriptor> _createNumberedMarker(int number) async {
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    const double size = 60.0; // 縮小整體尺寸，從 120.0 改為 60.0
+
+    // 繪製圓形背景
+    final Paint circlePaint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.fill;
+    
+    final Paint borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0; // 縮小邊框寬度，從 8.0 改為 4.0
+
+    const double radius = size / 2;
+    const Offset center = Offset(radius, radius);
+    
+    canvas.drawCircle(center, radius - 2, circlePaint); // 調整內邊距
+    canvas.drawCircle(center, radius - 2, borderPaint); // 調整內邊距
+
+    // 繪製數字
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: number.toString(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 28.0, // 縮小字體大小，從 60.0 改為 28.0
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    final double textX = (size - textPainter.width) / 2;
+    final double textY = (size - textPainter.height) / 2;
+    textPainter.paint(canvas, Offset(textX, textY));
+
+    final ui.Picture picture = pictureRecorder.endRecording();
+    final ui.Image image = await picture.toImage(size.toInt(), size.toInt());
+    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List uint8List = byteData!.buffer.asUint8List();
+
+    return BitmapDescriptor.fromBytes(uint8List);
+  }
+
+  // 為特定天數創建地圖標記
+  void _createMarkersForDay(int dayIndex) {
+    if (dayIndex < 0 || dayIndex >= _itinerary.itineraryDays.length) {
+      _markers.clear();
+      return;
+    }
+    
+    final day = _itinerary.itineraryDays[dayIndex];
+    final newMarkers = <Marker>{};
+
+    for (int i = 0; i < day.spots.length; i++) {
+      final spot = day.spots[i];
+      final markerIcon = _numberMarkers[i + 1] ?? BitmapDescriptor.defaultMarker;
+      
+      newMarkers.add(
+        Marker(
+          markerId: MarkerId('day_${dayIndex}_spot_${spot.id}'),
+          position: LatLng(spot.latitude, spot.longitude),
+          icon: markerIcon,
+          infoWindow: InfoWindow(
+            title: spot.name,
+            snippet: '第${i + 1}站 • ${spot.startTime}',
+          ),
+        ),
+      );
+    }
+    
+    _markers = newMarkers;
+  }
+
+  // 計算地圖邊界並調整視角
+  void _fitMapToSpots(int dayIndex) {
+    if (dayIndex < 0 || dayIndex >= _itinerary.itineraryDays.length) return;
+    
+    final day = _itinerary.itineraryDays[dayIndex];
+    if (day.spots.isEmpty || _mapController == null) return;
+
+    if (day.spots.length == 1) {
+      // 只有一個景點時，直接定位到該景點
+      final spot = day.spots[0];
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          LatLng(spot.latitude, spot.longitude),
+          15.0,
+        ),
+      );
+    } else {
+      // 多個景點時，計算邊界
+      double minLat = day.spots[0].latitude;
+      double maxLat = day.spots[0].latitude;
+      double minLng = day.spots[0].longitude;
+      double maxLng = day.spots[0].longitude;
+
+      for (final spot in day.spots) {
+        minLat = math.min(minLat, spot.latitude);
+        maxLat = math.max(maxLat, spot.latitude);
+        minLng = math.min(minLng, spot.longitude);
+        maxLng = math.max(maxLng, spot.longitude);
+      }
+
+      // 添加一些邊距
+      const double padding = 0.01;
+      minLat -= padding;
+      maxLat += padding;
+      minLng -= padding;
+      maxLng += padding;
+
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLngBounds(
+          LatLngBounds(
+            southwest: LatLng(minLat, minLng),
+            northeast: LatLng(maxLat, maxLng),
+          ),
+          100.0, // padding
+        ),
+      );
     }
   }  // 保存行程變更
   Future<void> _saveItinerary() async {
@@ -487,24 +613,28 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
           ),
         ],
       ),
-      // 地圖/列表切換按鈕 - 只在天數頁籤顯示
+      // 地圖/列表切換按鈕
       floatingActionButton: _tabController.index > 0
           ? FloatingActionButton(
               key: const ValueKey('mapListToggle'), // 添加key幫助Flutter識別
               onPressed: () {
-                print('FloatingActionButton pressed: current tab index = ${_tabController.index}');
                 setState(() {
                   _isMapView = !_isMapView;
-                  print('Map view toggled to: $_isMapView');
-                  
-                  // 如果切換到地圖視圖，準備當前天數索引
-                  if (_isMapView && _tabController.index > 0) {
-                    _currentMapDayIndex = _tabController.index - 1;
-                    print('Preparing map for day index: $_currentMapDayIndex');
-                    
-                    // 不立即操作地圖，讓 onMapCreated 處理初始化
-                  }
                 });
+                
+                // 如果切換到地圖視圖，延遲調整視角和標記
+                if (_isMapView && _tabController.index > 0) {
+                  final currentDayIndex = _tabController.index - 1;
+                  // 立即更新標記
+                  _createMarkersForDay(currentDayIndex);
+                  
+                  // 延遲調整視角
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && _mapController != null) {
+                      _fitMapToSpots(currentDayIndex);
+                    }
+                  });
+                }
               },
               backgroundColor: Colors.blueAccent,
               child: Icon(_isMapView ? Icons.list : Icons.map),
@@ -869,13 +999,16 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 構建地圖視圖
   Widget _buildMapView(int dayIndex, ItineraryDay day) {
-    // 確保當前天數索引正確
-    _currentMapDayIndex = dayIndex;
+    // 確保標記是最新的
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _createMarkersForDay(dayIndex);
+      }
+    });
     
     return Stack(
       children: [
         GoogleMap(
-          key: const ValueKey('itinerary_map'), // 使用固定的 key 避免重建
           mapType: MapType.normal,
           initialCameraPosition: CameraPosition(
             target: LatLng(
@@ -886,34 +1019,15 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
           ),
           markers: _markers,
           onMapCreated: (GoogleMapController controller) {
-            print('Map created for day $dayIndex');
-            
-            // 只在第一次創建時設置 controller
-            if (_mapController == null) {
-              _mapController = controller;
-              
-              print('Map controller initialized');
-              
-              // 延遲更新，確保地圖完全準備好
-              Future.delayed(const Duration(milliseconds: 1000), () {
-                if (mounted && _mapController != null) {
-                  print('Initial map setup for day $dayIndex');
-                  _createMarkersForDay(dayIndex);
-                  setState(() {}); // 觸發重建以顯示標記
-                  
-                  // 設置地圖準備好的狀態
-                  _isMapReady = true;
-                  
-                  // 不自動調整視角，讓用戶手動觸發
-                  print('Map ready, user can manually adjust view');
-                }
-              });
-            } else {
-              // 地圖已經存在，只更新標記
-              print('Map already exists, updating markers for day $dayIndex');
-              _createMarkersForDay(dayIndex);
-              setState(() {}); // 觸發重建以顯示標記
-            }
+            _mapController = controller;
+            // 地圖創建完成後立即更新標記和調整視角
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _createMarkersForDay(dayIndex);
+                setState(() {}); // 強制重繪以顯示標記
+                _fitMapToSpots(dayIndex);
+              }
+            });
           },
           myLocationEnabled: true,
           myLocationButtonEnabled: true,
@@ -942,14 +1056,6 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.center_focus_strong),
-                    tooltip: '調整地圖視角',
-                    onPressed: () {
-                      print('Manual map focus requested for day $dayIndex');
-                      _safelyFitMapToSpots(dayIndex);
-                    },
-                  ),
-                  IconButton(
                     icon: const Icon(Icons.info_outline),
                     onPressed: () {
                       _showDayInfoDialog(dayIndex);
@@ -961,6 +1067,11 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
           ),
         ),
       ],
+    );
+  }
+
+  // 構建日期頭部欄
+  Widget _buildDayHeader(int dayIndex, ItineraryDay day) {
     );
   }
 
@@ -1114,21 +1225,38 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
   }
 
   // 顯示添加景點選項
-  void _showAddSpotOptions() {
-    showModalBottomSheet(
+  void _showAddSpotOptions() async {
+    final result = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => const AddSpotOptions(),
+      builder: (context) => AddSpotOptions(targetItinerary: widget.itinerary),
     );
+    
+    // 如果用戶選擇了從收藏添加，或對話框關閉後，刷新行程數據
+    if (result == 'favorites_selected' || result == null) {
+      // 延遲一點再刷新，確保添加操作完成
+      await Future.delayed(const Duration(milliseconds: 500));
+      _reloadItinerary();
+    }
   }
 
   // 顯示插入景點選項
-  void _showInsertSpotOptions(int afterIndex) {
-    showModalBottomSheet(
+  void _showInsertSpotOptions(int afterIndex) async {
+    final result = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => const AddSpotOptions(isInsert: true),
+      builder: (context) => AddSpotOptions(
+        isInsert: true,
+        targetItinerary: widget.itinerary,
+      ),
     );
+    
+    // 如果用戶選擇了從收藏添加，或對話框關閉後，刷新行程數據
+    if (result == 'favorites_selected' || result == null) {
+      // 延遲一點再刷新，確保添加操作完成
+      await Future.delayed(const Duration(milliseconds: 500));
+      _reloadItinerary();
+    }
   }  // 顯示更改交通方式對話框
   void _showChangeTransportDialog(Spot originSpot, Spot destinationSpot) {
     showDialog(
@@ -1581,220 +1709,81 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
       )).toList(),
     );  }
 
-  // 初始化編號標記
-  Future<void> _initializeNumberMarkers() async {
-    for (int i = 1; i <= 20; i++) {
-      final markerIcon = await _createNumberedMarker(i);
-      _numberMarkers[i] = markerIcon;
-    }
-  }
-
-  // 創建帶編號的標記圖標
-  Future<BitmapDescriptor> _createNumberedMarker(int number) async {
-    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
-    final Canvas canvas = Canvas(pictureRecorder);
-    const double size = 60.0;
-
-    // 繪製圓形背景
-    final Paint circlePaint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.fill;
-    
-    final Paint borderPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0;
-
-    const double radius = size / 2;
-    const Offset center = Offset(radius, radius);
-    
-    canvas.drawCircle(center, radius - 2, circlePaint);
-    canvas.drawCircle(center, radius - 2, borderPaint);
-
-    // 繪製數字
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: number.toString(),
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 28.0,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      textDirection: ui.TextDirection.ltr,
-    );
-
-    textPainter.layout();
-    final double textX = (size - textPainter.width) / 2;
-    final double textY = (size - textPainter.height) / 2;
-    textPainter.paint(canvas, Offset(textX, textY));
-
-    final ui.Picture picture = pictureRecorder.endRecording();
-    final ui.Image image = await picture.toImage(size.toInt(), size.toInt());
-    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final Uint8List uint8List = byteData!.buffer.asUint8List();
-
-    return BitmapDescriptor.fromBytes(uint8List);
-  }
-
-  // 為特定天數創建地圖標記
-  void _createMarkersForDay(int dayIndex) {
-    if (dayIndex < 0 || dayIndex >= _itinerary.itineraryDays.length) {
-      _markers.clear();
-      return;
-    }
-    
-    final day = _itinerary.itineraryDays[dayIndex];
-    final newMarkers = <Marker>{};
-
-    for (int i = 0; i < day.spots.length; i++) {
-      final spot = day.spots[i];
-      final markerIcon = _numberMarkers[i + 1] ?? BitmapDescriptor.defaultMarker;
-      
-      newMarkers.add(
-        Marker(
-          markerId: MarkerId('day_${dayIndex}_spot_${spot.id}'),
-          position: LatLng(spot.latitude, spot.longitude),
-          icon: markerIcon,
-          infoWindow: InfoWindow(
-            title: spot.name,
-            snippet: '第${i + 1}站 • ${spot.startTime}',
-          ),
-        ),
-      );
-    }
-    
-    _markers = newMarkers;
-  }
-
-  // 安全地調整地圖視角，避免 web 版本的錯誤
-  void _safelyFitMapToSpots(int dayIndex) {
-    print('Attempting to safely fit map to spots for day $dayIndex');
-    
-    // 多重延遲確保地圖完全穩定
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
-      
-      // 再次檢查所有條件
-      if (_mapController == null || !_isMapReady) {
-        print('Map not ready for fitting, skipping');
-        return;
-      }
-      
-      if (dayIndex < 0 || dayIndex >= _itinerary.itineraryDays.length) {
-        print('Invalid day index for fitting: $dayIndex');
-        return;
-      }
-      
-      final day = _itinerary.itineraryDays[dayIndex];
-      if (day.spots.isEmpty) {
-        print('No spots to fit for day $dayIndex');
-        return;
-      }
-      
-      // 嘗試調整視角，但捕獲所有可能的錯誤
-      try {
-        print('Attempting camera animation for ${day.spots.length} spots');
-        
-        if (day.spots.length == 1) {
-          final spot = day.spots[0];
-          _mapController!.animateCamera(
-            CameraUpdate.newLatLngZoom(
-              LatLng(spot.latitude, spot.longitude),
-              15.0,
-            ),
-          ).timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {
-              print('Camera animation timeout for single spot');
-            },
-          );
-        } else {
-          // 多個景點時，計算邊界
-          double minLat = day.spots[0].latitude;
-          double maxLat = day.spots[0].latitude;
-          double minLng = day.spots[0].longitude;
-          double maxLng = day.spots[0].longitude;
-
-          for (final spot in day.spots) {
-            minLat = math.min(minLat, spot.latitude);
-            maxLat = math.max(maxLat, spot.latitude);
-            minLng = math.min(minLng, spot.longitude);
-            maxLng = math.max(maxLng, spot.longitude);
-          }
-
-          const double padding = 0.01;
-          minLat -= padding;
-          maxLat += padding;
-          minLng -= padding;
-          maxLng += padding;
-
-          _mapController!.animateCamera(
-            CameraUpdate.newLatLngBounds(
-              LatLngBounds(
-                southwest: LatLng(minLat, minLng),
-                northeast: LatLng(maxLat, maxLng),
-              ),
-              100.0,
-            ),
-          ).timeout(
-            const Duration(seconds: 5),
-            onTimeout: () {
-              print('Camera animation timeout for multiple spots');
-            },
-          );
-        }
-        
-        print('Camera animation completed successfully');
-      } catch (e, stackTrace) {
-        print('Error during camera animation: $e');
-        print('Stack trace: $stackTrace');
-        
-        // 發生錯誤時重置地圖狀態，允許重試
-        _isMapReady = false;
-        
-        // 延遲重新啟用
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted && _mapController != null) {
-            _isMapReady = true;
-            print('Map ready state restored after error');
-          }
-        });
-      }
-    });
-  }
-
-  // 顯示天數資訊對話框
+  // 顯示當天行程資訊對話框
   void _showDayInfoDialog(int dayIndex) {
     final day = _itinerary.itineraryDays[dayIndex];
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('第${dayIndex + 1}天資訊'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('景點數量: ${day.spots.length}'),
-            const SizedBox(height: 8),
-            Text('交通方式: ${day.transportation}'),
-            if (day.spots.isNotEmpty) ...[
+        title: Text('第${dayIndex + 1}天行程'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '景點順序：',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
               const SizedBox(height: 8),
-              const Text('景點列表:'),
               ...day.spots.asMap().entries.map((entry) {
                 final index = entry.key;
                 final spot = entry.value;
                 return Padding(
-                  padding: const EdgeInsets.only(left: 16, top: 4),
-                  child: Text('${index + 1}. ${spot.name}'),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              spot.name,
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              '${spot.startTime} • 停留 ${spot.stayHours}小時${spot.stayMinutes}分鐘',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 );
-              }),
+              }).toList(),
             ],
-          ],
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('關閉'),
           ),
         ],

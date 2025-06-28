@@ -6,10 +6,12 @@ import '../models/favorite_spot.dart';
 
 class AddToItineraryDialog extends StatefulWidget {
   final FavoriteSpot spot;
+  final Itinerary? targetItinerary;
 
   const AddToItineraryDialog({
     super.key,
     required this.spot,
+    this.targetItinerary,
   });
 
   @override
@@ -35,16 +37,28 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
       
       // 初始化選擇的天數（默認為每個行程的最後一天）
       Map<int, int> initSelectedDays = {};
+      int? targetItineraryIndex;
+      
       for (int i = 0; i < loadedItineraries.length; i++) {
         // 設置默認選擇的天數
         final recommendedDay = _getRecommendedDay(loadedItineraries[i]);
         initSelectedDays[i] = recommendedDay;
+        
+        // 如果有目標行程，找到它的索引
+        if (widget.targetItinerary != null && 
+            loadedItineraries[i].id == widget.targetItinerary!.id) {
+          targetItineraryIndex = i;
+        }
       }
       
       setState(() {
         itineraries = loadedItineraries;
         selectedDays = initSelectedDays;
         isLoading = false;
+        // 如果有目標行程，自動展開它
+        if (targetItineraryIndex != null) {
+          expandedIndex = targetItineraryIndex;
+        }
       });
     } catch (e) {
       print('加載行程失敗: $e');
@@ -114,8 +128,8 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
       // 關閉加載對話框
       if (mounted) Navigator.pop(context);
       
-      // 關閉加入行程對話框
-      if (mounted) Navigator.pop(context);
+      // 關閉加入行程對話框，並返回添加結果
+      if (mounted) Navigator.pop(context, updatedItinerary != null);
       
       // 顯示結果
       if (mounted) {
@@ -144,6 +158,9 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
       if (mounted) Navigator.pop(context);
       
       print('添加景點到行程時發生錯誤: $e');
+      
+      // 關閉加入行程對話框，並返回失敗結果
+      if (mounted) Navigator.pop(context, false);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

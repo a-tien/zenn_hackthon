@@ -7,13 +7,16 @@ import 'spot_detail_page.dart';
 import '../components/add_to_itinerary_dialog.dart';
 import '../../common/widgets/login_required_dialog.dart';
 import '../../common/services/firestore_service.dart';
+import '../../itinerary/models/itinerary.dart';
 
 class CollectionDetailPage extends StatefulWidget {
   final FavoriteCollection collection;
+  final Itinerary? targetItinerary;
 
   const CollectionDetailPage({
     super.key,
     required this.collection,
+    this.targetItinerary,
   });
 
   @override
@@ -399,10 +402,18 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
 
   // 顯示加入行程對話框
   // 修改 _showAddToItineraryDialog 方法
-void _showAddToItineraryDialog(FavoriteSpot spot) {
-  showDialog(
+void _showAddToItineraryDialog(FavoriteSpot spot) async {
+  final result = await showDialog<bool>(
     context: context,
-    builder: (context) => AddToItineraryDialog(spot: spot),
+    builder: (context) => AddToItineraryDialog(
+      spot: spot,
+      targetItinerary: widget.targetItinerary,
+    ),
   );
+  
+  // 如果成功添加到行程，返回結果給調用者
+  if (result == true && mounted) {
+    Navigator.pop(context, true); // 返回到調用的頁面，並告知成功添加
+  }
 }
 }

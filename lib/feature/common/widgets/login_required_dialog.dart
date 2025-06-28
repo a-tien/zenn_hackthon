@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../common/services/firestore_service.dart';
 
-class LoginRequiredDialog extends StatelessWidget {
+class LoginRequiredDialog extends StatefulWidget {
   final String feature;
   final VoidCallback? onLoginPressed;
 
@@ -10,6 +9,13 @@ class LoginRequiredDialog extends StatelessWidget {
     required this.feature,
     this.onLoginPressed,
   });
+
+  @override
+  State<LoginRequiredDialog> createState() => _LoginRequiredDialogState();
+}
+
+class _LoginRequiredDialogState extends State<LoginRequiredDialog> {
+  bool _isNavigating = false;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +32,7 @@ class LoginRequiredDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '使用「$feature」功能需要先登入帳號',
+            '使用「${widget.feature}」功能需要先登入帳號',
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 16),
@@ -65,16 +71,75 @@ class LoginRequiredDialog extends StatelessWidget {
           child: const Text('稍後再說'),
         ),
         ElevatedButton(
-          onPressed: onLoginPressed ?? () {
+          onPressed: _isNavigating ? null : () {
+            if (_isNavigating) return;
+            
+            setState(() {
+              _isNavigating = true;
+            });
+            
+            // 獲取必要的引用
+            final navigator = Navigator.of(context, rootNavigator: true);
+            final scaffoldMessenger = ScaffoldMessenger.of(context);
+            
+            // 先關閉對話框
             Navigator.of(context).pop();
-            // 預設行為：導航到登入頁面
-            Navigator.of(context).pushNamed('/auth');
+            
+            // 使用 addPostFrameCallback 確保在下一幀執行導航
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              try {
+                if (!mounted) return;
+                
+                // 導航到登入頁面
+                final result = await navigator.pushNamed('/login');
+                
+                if (result == true && mounted) {
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('登入成功！現在可以使用此功能了'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  
+                  // 如果有自定義的登入後回調，執行它
+                  if (widget.onLoginPressed != null) {
+                    widget.onLoginPressed!();
+                  }
+                }
+              } catch (e) {
+                print('導航到登入頁面時發生錯誤: $e');
+                if (mounted) {
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('無法跳轉到登入頁面，請稍後再試'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } finally {
+                if (mounted) {
+                  setState(() {
+                    _isNavigating = false;
+                  });
+                }
+              }
+            });
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
             foregroundColor: Colors.white,
           ),
-          child: const Text('立即登入'),
+          child: _isNavigating 
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text('立即登入'),
         ),
       ],
     );
@@ -88,6 +153,7 @@ class LoginRequiredDialog extends StatelessWidget {
   }) {
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (context) => LoginRequiredDialog(
         feature: feature,
         onLoginPressed: onLoginPressed,
@@ -95,17 +161,17 @@ class LoginRequiredDialog extends StatelessWidget {
     );
   }
 
-  /// 檢查登入狀態，如果未登入則顯示對話框
-  static bool checkLoginAndShowDialog(
-    BuildContext context, 
-    String feature, {
-    VoidCallback? onLoginPressed,
-  }) {
-    if (FirestoreService.isUserLoggedIn()) {
-      return true;
-    } else {
-      show(context, feature, onLoginPressed: onLoginPressed);
-      return false;
-    }
-  }
+  // /// 檢查登入狀態，如果未登入則顯示對話框
+  // static bool checkLoginAndShowDialog(
+  //   BuildContext context, 
+  //   String feature, {
+  //   VoidCallback? onLoginPressed,
+  // }) {
+  //   if (FirestoreService.isUserLoggedIn()) {
+  //     return true;
+  //   } else {
+  //     show(context, feature, onLoginPressed: onLoginPressed);
+  //     return false;
+  //   }
+  // }
 }

@@ -25,6 +25,10 @@ class _SpotType {
 }
 
 class DiscoverPage extends StatefulWidget {
+  final Destination? initialDestination;
+
+  const DiscoverPage({super.key, this.initialDestination});
+
   @override
   State<DiscoverPage> createState() => _DiscoverPageState();
 }
@@ -69,8 +73,39 @@ class _DiscoverPageState extends State<DiscoverPage> {
   @override
   void initState() {
     super.initState();
+    
+    // 設置初始目的地（如果有提供）
+    if (widget.initialDestination != null) {
+      print('🎯 DiscoverPage 收到初始目的地: ${widget.initialDestination!.name}');
+      _selectedDestination = widget.initialDestination;
+      
+      // 延遲移動到目的地，確保地圖控制器已初始化
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _waitForMapAndMoveToDestination();
+      });
+    } else {
+      print('🗺️ DiscoverPage 沒有收到初始目的地，使用預設位置');
+    }
+    
     _loadCustomMarkers();
     _loadSpots();
+  }
+  
+  // 等待地圖控制器初始化並移動到目的地
+  void _waitForMapAndMoveToDestination() async {
+    if (_selectedDestination != null) {
+      // 等待地圖控制器初始化
+      while (_mapController == null) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      
+      // 額外延遲確保地圖完全載入
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      if (_mapController != null && _selectedDestination != null) {
+        _moveToDestination(_selectedDestination!);
+      }
+    }
   }
 
   @override

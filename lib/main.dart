@@ -5,6 +5,7 @@ import 'feature/itinerary/pages/itinerary_page.dart';
 import 'feature/profile/pages/profile_page.dart';
 import 'feature/profile/pages/login_page.dart'; // 導入登入頁面
 import 'feature/collection/services/favorite_service.dart';
+import 'feature/itinerary/models/destination.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -58,24 +59,47 @@ class MyApp extends StatelessWidget {
 }
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key});
+  final int initialTab;
+  final Destination? initialDestination;
+  
+  const MainNavigation({super.key, this.initialTab = 1, this.initialDestination});
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 1;  final List<Widget> _pages = [
-    MyHomePage(),     // 你可以換成 HomePage()
-    DiscoverPage(),            // 探索頁（地圖頁）
-    ItineraryPage(),
-    const ProfilePage(),
-  ];
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialTab;
+  }
 
   @override
   Widget build(BuildContext context) {
+    // 如果有初始目的地且當前選中探索標籤，傳遞給 DiscoverPage
+    final shouldPassDestination = _selectedIndex == 1 && widget.initialDestination != null;
+    
+    if (shouldPassDestination) {
+      print('🏠 MainNavigation 正在建立 DiscoverPage，傳遞目的地: ${widget.initialDestination!.name}');
+    }
+    
+    final List<Widget> pages = [
+      MyHomePage(),     // 你可以換成 HomePage()
+      DiscoverPage(
+        initialDestination: shouldPassDestination ? widget.initialDestination : null,
+        key: shouldPassDestination 
+            ? ValueKey('discover_${widget.initialDestination!.id}') 
+            : const ValueKey('discover_default'),
+      ),            // 探索頁（地圖頁）
+      ItineraryPage(),
+      const ProfilePage(),
+    ];
+
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: const Color.fromARGB(255, 73, 138, 179),
