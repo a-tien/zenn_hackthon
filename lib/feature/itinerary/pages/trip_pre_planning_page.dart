@@ -151,14 +151,14 @@ class _TripPrePlanningPageState extends State<TripPrePlanningPage> {
       // 跳轉到結果頁面
       if (!mounted) return;
       
-      final resultItinerary = jsonResult;
+      final resultItinerary = Itinerary.fromJson(jsonResult);
       
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => AIPlanningResultPage(
             originalItinerary: _itinerary,
-            resultPreItinerary: resultItinerary,
+            resultItinerary: resultItinerary,
             preserveExisting: widget.preserveExisting,
             itineraryId: _itinerary.id, // 傳入行程ID
           ),
