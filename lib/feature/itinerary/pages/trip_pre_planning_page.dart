@@ -160,6 +160,7 @@ class _TripPrePlanningPageState extends State<TripPrePlanningPage> {
             originalItinerary: _itinerary,
             resultItinerary: resultItinerary,
             preserveExisting: widget.preserveExisting,
+            itineraryId: _itinerary.id, // 傳入行程ID
           ),
         ),
       );

@@ -14,12 +14,14 @@ class AIPlanningResultPage extends StatefulWidget {
   final Itinerary originalItinerary;
   final Itinerary resultItinerary;
   final bool preserveExisting;
+  final String? itineraryId;
 
   const AIPlanningResultPage({
     super.key,
     required this.originalItinerary,
     required this.resultItinerary,
     required this.preserveExisting,
+    required this.itineraryId,
   });
 
   @override
@@ -173,7 +175,7 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
   // Firestore 更新行程
   Future<void> _updateItineraryToFirestore() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
-    final itineraryId = _resultItinerary.id;
+    final itineraryId = widget.itineraryId;
     final jsonResult = _resultItinerary.toJson();
 
     if (userId == null || itineraryId == null) {
