@@ -13,7 +13,7 @@ class ItineraryPage extends StatefulWidget {
   State<ItineraryPage> createState() => _ItineraryPageState();
 }
 
-class _ItineraryPageState extends State<ItineraryPage> {
+class _ItineraryPageState extends State<ItineraryPage> with WidgetsBindingObserver {
   List<Itinerary> itineraries = [];
   bool isLoading = true;
   final ItineraryService _itineraryService = ItineraryService();
@@ -21,6 +21,27 @@ class _ItineraryPageState extends State<ItineraryPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadItineraries();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // 當應用回到前台時刷新數據
+    if (state == AppLifecycleState.resumed) {
+      _loadItineraries();
+    }
+  }
+
+  // 公開的刷新方法，供外部調用
+  void refreshItineraries() {
     _loadItineraries();
   }
   Future<void> _loadItineraries() async {

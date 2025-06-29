@@ -29,6 +29,15 @@ class _DiscoverDestinationsPageState extends State<DiscoverDestinationsPage>
   }
 
   void _selectDestination(Destination destination) {
+    print('🏛️ 用戶點擊了區域: ${destination.name}');
+    print('📱 Widget mounted 狀態: $mounted');
+    
+    if (!mounted) {
+      print('❌ Widget 已經被銷毀，無法返回結果');
+      return;
+    }
+    
+    print('✅ 正在返回選擇的區域...');
     Navigator.pop(context, destination);
   }
 

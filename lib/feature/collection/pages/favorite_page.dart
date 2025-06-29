@@ -5,10 +5,12 @@ import '../services/favorite_service.dart';
 import '../../common/widgets/login_required_dialog.dart';
 import '../components/collection_card.dart';
 import 'collection_detail_page.dart';
-import 'spot_detail_page.dart';
+import '../../itinerary/models/itinerary.dart';
 
 class FavoritePage extends StatefulWidget {
-  const FavoritePage({super.key});
+  final Itinerary? targetItinerary;
+  
+  const FavoritePage({super.key, this.targetItinerary});
 
   @override
   State<FavoritePage> createState() => _FavoritePageState();
@@ -276,165 +278,25 @@ class _FavoritePageState extends State<FavoritePage> {
       itemBuilder: (context, index) {
         final collection = collections[index];        return CollectionCard(
           collection: collection,
-          onTap: () {
-            // 導航到收藏集詳情頁面
-            Navigator.push(
+          onTap: () async {
+            // 導航到收藏集詳情頁面，傳遞目標行程資訊
+            final result = await Navigator.push<bool>(
               context,
               MaterialPageRoute(
-                builder: (context) => CollectionDetailPage(collection: collection),
+                builder: (context) => CollectionDetailPage(
+                  collection: collection,
+                  targetItinerary: widget.targetItinerary,
+                ),
               ),
             );
+            
+            // 如果成功添加到行程，返回結果給調用者
+            if (result == true && mounted && widget.targetItinerary != null) {
+              Navigator.pop(context, true); // 返回到行程細節頁面，並告知成功添加
+            }
           },
         );
       },
     );
   }
-
-  Widget _buildFavoriteSpotsList() {
-    if (isMapView) {
-      // 地圖視圖 - 實際應用中需要使用地圖元件
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.map, size: 80, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              "地圖視圖",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text("此處將顯示收藏地點的地圖視圖", style: TextStyle(color: Colors.grey[600])),
-          ],
-        ),
-      );
-    }
-
-    // 列表視圖 - 顯示收藏的景點
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: favoriteSpots.length,
-      itemBuilder: (context, index) {
-        final spot = favoriteSpots[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                spot.imageUrl.isNotEmpty ? spot.imageUrl : 'https://via.placeholder.com/60x60',
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 60,
-                    height: 60,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.place, color: Colors.grey),
-                  );
-                },
-              ),
-            ),
-            title: Text(
-              spot.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (spot.address.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    spot.address,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.star, color: Colors.amber, size: 16),                    const SizedBox(width: 4),
-                    Text(
-                      spot.rating.toStringAsFixed(1),
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 取消收藏按鈕
-                IconButton(
-                  icon: const Icon(Icons.favorite, color: Colors.red),
-                  onPressed: () => _removeFavorite(spot),
-                ),
-                // 查看詳情按鈕
-                IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios),
-                  onPressed: () => _viewSpotDetail(spot),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // 移除收藏
-  Future<void> _removeFavorite(FavoriteSpot spot) async {
-    try {
-      await FavoriteService.removeSpotFromFavorites(spot.id);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已移除「${spot.name}」從收藏')),
-        );
-        // 重新載入收藏列表
-        _loadCollections();
-      }
-    } catch (e) {
-      if (e.toString().contains('需要登入')) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => const LoginRequiredDialog(feature: '移除收藏'),
-          );
-        }
-        return;
-      }
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('移除收藏失敗: $e')),
-        );
-      }
-    }
-  }
-
-  // 查看景點詳情
-  void _viewSpotDetail(FavoriteSpot spot) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SpotDetailPage(spot: spot),
-      ),
-    );
-  }
-
-  // ...existing code...
 }
