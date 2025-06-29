@@ -3,8 +3,8 @@ class Spot {
   final String area;
   final String image;
   final String address;
-  final double rating;
-  final double distance;
+  final double? rating;
+  final double? distance;
 
   Spot({
     required this.name,

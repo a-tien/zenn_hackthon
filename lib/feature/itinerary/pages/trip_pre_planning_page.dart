@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/itinerary.dart';
 import '../models/itinerary_member.dart';
 import '../components/edit_itinerary_dialog.dart';
 import '../components/budget_setting_dialog.dart';
 import '../components/additional_requirements_dialog.dart';
+import '../services/api_service.dart'; // 新增的API服務
+import 'update_firestore.dart';
 import 'manage_itinerary_members_page.dart';
 import 'ai_planning_result_page.dart';
 
@@ -55,7 +58,8 @@ class _TripPrePlanningPageState extends State<TripPrePlanningPage> {
   }
   
   // 管理行程成員
-  Future<void> _manageMembers() async {    final result = await Navigator.push<List<dynamic>>(
+  Future<void> _manageMembers() async {
+    final result = await Navigator.push<List<dynamic>>(
       context,
       MaterialPageRoute(
         builder: (context) => ManageItineraryMembersPage(
@@ -113,37 +117,70 @@ class _TripPrePlanningPageState extends State<TripPrePlanningPage> {
   // 開始智能規劃
   Future<void> _startPlanning() async {
     if (_itinerary.members.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請設定行程成員')),
-      );
+      _showSnackBar('請設定行程成員');
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
     });
-    
-    // 在這裡調用API或進行規劃邏輯
-    // 目前先用模擬資料
-    await Future.delayed(const Duration(seconds: 2));
-    
-    if (!mounted) return;
-    
-    setState(() {
-      _isLoading = false;
-    });
-    
-    // 跳轉到結果頁面
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AIPlanningResultPage(
-          originalItinerary: _itinerary,
-          // 目前使用原行程作為模擬結果
-          resultItinerary: _itinerary,
-          preserveExisting: widget.preserveExisting,
+
+    try {
+      // 使用新的API服務
+      final jsonResult = await ApiService.planItinerary(
+        hasBudget: _hasBudget,
+        minBudget: _minBudget,
+        maxBudget: _maxBudget,
+        additionalRequirements: _additionalRequirements,
+        itinerary: _itinerary, // 傳入完整的itinerary物件
+        preserveExisting: widget.preserveExisting,
+      );
+
+      // 取得userId與itineraryId
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      final itineraryId = _itinerary.id;
+
+      if (userId == null || itineraryId == null) {
+        throw Exception('使用者ID或行程ID為空，無法更新Firestore');
+      }
+
+      // 更新Firestore
+      await updateItineraryPartial(userId, itineraryId, jsonResult);
+      print('成功寫入 Firestore 的資料: $jsonResult');
+
+      // 跳轉到結果頁面
+      if (!mounted) return;
+      
+      final resultItinerary = Itinerary.fromJson(jsonResult);
+      
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AIPlanningResultPage(
+            originalItinerary: _itinerary,
+            resultItinerary: resultItinerary,
+            preserveExisting: widget.preserveExisting,
+          ),
         ),
-      ),
+      );
+      
+    } on ApiException catch (e) {
+      _showSnackBar('API錯誤: ${e.message}');
+    } catch (e) {
+      _showSnackBar('規劃失敗: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // 顯示SnackBar的輔助方法
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 

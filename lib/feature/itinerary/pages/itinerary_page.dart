@@ -30,6 +30,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
     
     try {
       final loadedItineraries = await _itineraryService.getAllItineraries();
+      print('取得行程數量: ${loadedItineraries.length}');
+      print('行程內容: $loadedItineraries');
       
       setState(() {
         itineraries = loadedItineraries;
