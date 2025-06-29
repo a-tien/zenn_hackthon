@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Firestore Direct Connection Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #status { padding: 10px; border-radius: 5px; }
+    .success { background-color: #e6ffed; border: 1px solid #b7ebc9; }
+    .error { background-color: #ffebee; border: 1px solid #ffcdd2; }
+  </style>
+</head>
+<body>
+  <h1>Firestore Direct Connection Test</h1>
+  <p>This page tests the Firestore connection completely outside of Flutter.</p>
+  <div id="status">Initializing...</div>
+  <hr>
+  <h2>Instructions:</h2>
+  <ol>
+    <li>Run your app normally: <code>flutter run -d chrome --web-port=8080</code></li>
+    <li>Once the app is running, open a new browser tab.</li>
+    <li>Navigate to: <a href="http://localhost:8080/firestore_test.html">http://localhost:8080/firestore_test.html</a></li>
+    <li>Observe the status message above.</li>
+  </ol>
+
+  <!-- Firebase v8 CDN -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyCB-1YhS0ZaKYfYwKdZ_fDrTa9a1yDShRA",
+      authDomain: "travel-plan-caba3.firebaseapp.com",
+      projectId: "travel-plan-caba3",
+      storageBucket: "travel-plan-caba3.firebasestorage.app",
+      messagingSenderId: "1088581851074",
+      appId: "1:1088581851074:web:d9bb41ec8ed18ce909a85b",
+      measurementId: "G-M1D88NRVJ1"
+    };
+    var statusDiv = document.getElementById('status');
+    async function runTest() {
+      try {
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        statusDiv.innerText = 'Firebase App Initialized. Getting Firestore...';
+        // Initialize services
+        var firestore = firebase.firestore();
+        var auth = firebase.auth();
+        statusDiv.innerText = 'Firestore and Auth services initialized.';
+        // Sign in anonymously
+        statusDiv.innerText = 'Signing in anonymously...';
+        await auth.signInAnonymously();
+        var user = auth.currentUser;
+        if (!user) {
+          throw new Error("Anonymous sign-in failed.");
+        }
+        statusDiv.innerText = `Signed in as: ${user.uid}. Attempting to write to Firestore...`;
+        // Firestore write test
+        var testDocRef = firestore.collection('direct_html_test').doc(user.uid);
+        await testDocRef.set({
+          timestamp: new Date(),
+          status: 'success',
+          userAgent: navigator.userAgent
+        });
+        statusDiv.innerText = 'Write successful! Attempting to read...';
+        // Firestore read test
+        var doc = await testDocRef.get();
+        if (doc.exists) {
+          statusDiv.innerText = `✅ SUCCESS!\nRead data back successfully.\nTimestamp: ${doc.data().timestamp}`;
+          statusDiv.className = 'success';
+        } else {
+          throw new Error("Read failed: Document does not exist after write.");
+        }
+      } catch (error) {
+        console.error("Firestore Test Failed:", error);
+        statusDiv.innerText = `❌ FAILED!\n\nError: ${error.message}\n\nCheck the browser's developer console (F12) for more details. This confirms the issue is likely with the Firebase project setup or your network, not Flutter.`;
+        statusDiv.className = 'error';
+      }
+    }
+    runTest();
+  </script>
+</body>
+</html>
