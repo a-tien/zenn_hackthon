@@ -12,14 +12,14 @@ import 'update_firestore.dart';
 
 class AIPlanningResultPage extends StatefulWidget {
   final Itinerary originalItinerary;
-  final Map<String, dynamic> resultPreItinerary;
+  final Itinerary resultItinerary;
   final bool preserveExisting;
   final String? itineraryId;
 
   const AIPlanningResultPage({
     super.key,
     required this.originalItinerary,
-    required this.resultPreItinerary,
+    required this.resultItinerary,
     required this.preserveExisting,
     required this.itineraryId,
   });
@@ -30,15 +30,13 @@ class AIPlanningResultPage extends StatefulWidget {
 
 class _AIPlanningResultPageState extends State<AIPlanningResultPage> with TickerProviderStateMixin {
   late TabController _tabController;
-  late Map<String, dynamic> _resultPreItinerary = widget.resultPreItinerary;
-  final ItineraryService _itineraryService = ItineraryService();
   late Itinerary _resultItinerary;
+  final ItineraryService _itineraryService = ItineraryService();
 
   @override
   void initState() {
     super.initState();
-
-    _resultItinerary = Itinerary.fromJson(_resultPreItinerary);
+    _resultItinerary = widget.resultItinerary;
     
     // 如果是模擬數據，先生成一些示例景點
     if (!widget.preserveExisting) {
@@ -178,8 +176,7 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
   Future<void> _updateItineraryToFirestore() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     final itineraryId = widget.itineraryId;
-    final jsonResult = _resultPreItinerary;
-    print(jsonResult);
+    final jsonResult = _resultItinerary.toJson();
 
     if (userId == null || itineraryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
