@@ -5,6 +5,7 @@ import '../models/detailed_favorite_spot.dart';
 import '../components/nearby_spot_card.dart';
 import '../components/add_to_itinerary_dialog.dart';
 import '../services/favorite_service.dart';
+import '../services/text_to_speech_service.dart';
 import '../../discover/components/add_to_collection_dialog.dart';
 import '../../discover/services/places_api_service.dart';
 
@@ -22,10 +23,14 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
   bool isLoading = true;
   bool isFavorited = false;
   bool isCheckingFavorite = true;
-    // 詳細資訊狀態
+  // 詳細資訊狀態
   DetailedFavoriteSpot? detailedSpot;
   bool isLoadingDetails = true;
   String? errorMessage;
+  
+  // 語音播放狀態
+  bool isPlayingName = false;
+  bool isPlayingAddress = false;
   @override
   void initState() {
     super.initState();
@@ -165,12 +170,62 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
     }
   }
 
-  // 文字轉語音
-  void _textToSpeech(String text) {
-    // 這裡將來會實現文字轉語音功能
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('播放: $text')));
+  // 文字轉語音（針對景點名稱）
+  Future<void> _textToSpeechName(String text) async {
+    if (isPlayingName) return; // 防止重複點擊
+    
+    setState(() {
+      isPlayingName = true;
+    });
+
+    try {
+      await TextToSpeechService.smartTextToSpeech(text);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('語音播放失敗: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isPlayingName = false;
+        });
+      }
+    }
+  }
+
+  // 文字轉語音（針對地址）
+  Future<void> _textToSpeechAddress(String text) async {
+    if (isPlayingAddress) return; // 防止重複點擊
+    
+    setState(() {
+      isPlayingAddress = true;
+    });
+
+    try {
+      await TextToSpeechService.smartTextToSpeech(text);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('語音播放失敗: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isPlayingAddress = false;
+        });
+      }
+    }
   }
 
   @override
@@ -216,8 +271,17 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.volume_up),
-                        onPressed: () => _textToSpeech(widget.spot.name),
+                        icon: isPlayingName
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                ),
+                              )
+                            : const Icon(Icons.volume_up),
+                        onPressed: isPlayingName ? null : () => _textToSpeechName(widget.spot.name),
                         tooltip: '語音播放',
                       ),
                     ],
@@ -238,8 +302,17 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.volume_up),
-                        onPressed: () => _textToSpeech(widget.spot.address),
+                        icon: isPlayingAddress
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                ),
+                              )
+                            : const Icon(Icons.volume_up),
+                        onPressed: isPlayingAddress ? null : () => _textToSpeechAddress(widget.spot.address),
                         tooltip: '語音播放',
                       ),
                     ],
