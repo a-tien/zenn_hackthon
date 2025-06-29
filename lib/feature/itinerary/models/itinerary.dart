@@ -4,13 +4,13 @@ import 'destination.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Itinerary {
-  String? id; // 新增Firestore文件ID
+  String? id; // Firestore文件ID
   String name;
   bool useDateRange;
   int days;
   DateTime startDate;
   DateTime endDate;
-  List<Destination> destinations; // 改為目的地列表
+  List<Destination> destinations; // 目的地列表
   String transportation;
   String travelType;
   List<ItineraryDay> itineraryDays;
@@ -43,7 +43,9 @@ class Itinerary {
       return destinations.map((d) => d.name).join('、');
     }
     return '${destinations.take(2).map((d) => d.name).join('、')} 等 ${destinations.length} 個地點';
-  }  factory Itinerary.fromJson(Map<String, dynamic> json) {
+  }
+
+  factory Itinerary.fromJson(Map<String, dynamic> json) {
     List<ItineraryDay> days = [];
     if (json.containsKey('itineraryDays') && json['itineraryDays'] != null) {
       days = (json['itineraryDays'] as List)
@@ -81,15 +83,15 @@ class Itinerary {
 
     // 創建行程實例
     Itinerary itinerary = Itinerary(
-      id: json['id'], // 解析ID
-      name: json['name'],
-      useDateRange: json['useDateRange'],
-      days: json['days'],
-      startDate: DateTime.parse(json['startDate']),
-      endDate: DateTime.parse(json['endDate']),
+      id: json['id'],
+      name: json['name'] ?? '',
+      useDateRange: json['useDateRange'] ?? false,
+      days: json['days'] ?? 0,
+      startDate: json['startDate'] != null ? DateTime.parse(json['startDate']) : DateTime.now(),
+      endDate: json['endDate'] != null ? DateTime.parse(json['endDate']) : DateTime.now(),
       destinations: destinations,
-      transportation: json['transportation'],
-      travelType: json['travelType'],
+      transportation: json['transportation'] ?? '',
+      travelType: json['travelType'] ?? '',
       itineraryDays: days,
       members: members,
     );
@@ -108,9 +110,11 @@ class Itinerary {
     }
     
     return itinerary;
-  }  Map<String, dynamic> toJson() {
+  }
+
+  Map<String, dynamic> toJson() {
     return {
-      'id': id, // 包含ID
+      'id': id,
       'name': name,
       'useDateRange': useDateRange,
       'days': days,
@@ -197,18 +201,18 @@ class Itinerary {
     // 創建行程實例
     Itinerary itinerary = Itinerary(
       id: documentId,
-      name: data['name'],
-      useDateRange: data['useDateRange'],
-      days: data['days'],
+      name: data['name'] ?? '',
+      useDateRange: data['useDateRange'] ?? false,
+      days: data['days'] ?? 0,
       startDate: data['startDate'] is Timestamp 
           ? (data['startDate'] as Timestamp).toDate()
-          : DateTime.parse(data['startDate']),
+          : (data['startDate'] != null ? DateTime.parse(data['startDate']) : DateTime.now()),
       endDate: data['endDate'] is Timestamp 
           ? (data['endDate'] as Timestamp).toDate()
-          : DateTime.parse(data['endDate']),
+          : (data['endDate'] != null ? DateTime.parse(data['endDate']) : DateTime.now()),
       destinations: destinations,
-      transportation: data['transportation'],
-      travelType: data['travelType'],
+      transportation: data['transportation'] ?? '',
+      travelType: data['travelType'] ?? '',
       itineraryDays: days,
       members: members,
     );

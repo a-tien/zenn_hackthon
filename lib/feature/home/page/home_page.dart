@@ -180,7 +180,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       letterSpacing: -1,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   if (errorMessage.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -234,19 +234,19 @@ class _MyHomePageState extends State<MyHomePage> {
                         MaterialPageRoute(builder: (context) => ChatDemoApp()),
                       );
                     },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
+                    // child: Container(
+                    //   padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.grey[100],
+                    //     borderRadius: BorderRadius.circular(16),
+                    //     boxShadow: [
+                    //       BoxShadow(
+                    //         color: Colors.black12,
+                    //         blurRadius: 8,
+                    //         offset: Offset(0, 2),
+                    //       ),
+                    //     ],
+                    //   ),
                       // child: Row(
                       //   children: const [
                       //     Icon(Icons.flash_on, color: Colors.black54),
@@ -260,7 +260,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       //     Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black26),
                       //   ],
                       // ),
-                    ),
+                    // ),
                   ),
                   const SizedBox(height: 32),
                   HomeSectionTitle(title: "熱門活動"),

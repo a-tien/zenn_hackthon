@@ -26,7 +26,7 @@ class ApiService {
         'days': itinerary.days,
         'transportation': itinerary.transportation,
         'preserveExisting': preserveExisting, // 新增 preserveExisting
-        'itineraryDays': itinerary.itineraryDays, // 新增 itineraryDays
+        'itineraryDays': itinerary.itineraryDays.map((day) => day.toJson()).toList(), // 新增 itineraryDays
       };
 
       print('發送API請求: $requestBody');
