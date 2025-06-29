@@ -8,8 +8,8 @@ class ItineraryDay {
   ItineraryDay({
     required this.dayNumber,
     required this.transportation,
-    required this.spots,
-  });
+    List<Spot>? spots,
+  }) : this.spots = spots ?? [];
 
   factory ItineraryDay.fromJson(Map<String, dynamic> json) {
     List<Spot> spotsList = [];
@@ -20,8 +20,8 @@ class ItineraryDay {
     }
     
     return ItineraryDay(
-      dayNumber: json['dayNumber'],
-      transportation: json['transportation'],
+      dayNumber: json['dayNumber'] ?? 0,
+      transportation: json['transportation'] ?? '',
       spots: spotsList,
     );
   }
@@ -33,4 +33,20 @@ class ItineraryDay {
       'spots': spots.map((spot) => spot.toJson()).toList(),
     };
   }
+
+  // 輔助方法：安全地添加景點
+  void addSpot(Spot spot) {
+    spots.add(spot);
+  }
+
+  // 輔助方法：安全地移除景點
+  bool removeSpot(Spot spot) {
+    return spots.remove(spot);
+  }
+
+  // 輔助方法：獲取景點數量
+  int get spotsCount => spots.length;
+
+  // 輔助方法：檢查是否有景點
+  bool get hasSpots => spots.isNotEmpty;
 }

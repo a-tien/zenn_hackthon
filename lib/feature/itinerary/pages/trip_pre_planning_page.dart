@@ -137,16 +137,16 @@ class _TripPrePlanningPageState extends State<TripPrePlanningPage> {
       );
 
       // 取得userId與itineraryId
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      final itineraryId = _itinerary.id;
+      // final userId = FirebaseAuth.instance.currentUser?.uid;
+      // final itineraryId = _itinerary.id;
 
-      if (userId == null || itineraryId == null) {
-        throw Exception('使用者ID或行程ID為空，無法更新Firestore');
-      }
+      // if (userId == null || itineraryId == null) {
+      //   throw Exception('使用者ID或行程ID為空，無法更新Firestore');
+      // }
 
       // 更新Firestore
-      await updateItineraryPartial(userId, itineraryId, jsonResult);
-      print('成功寫入 Firestore 的資料: $jsonResult');
+      // await updateItineraryPartial(userId, itineraryId, jsonResult);
+      // print('成功寫入 Firestore 的資料: $jsonResult');
 
       // 跳轉到結果頁面
       if (!mounted) return;
@@ -160,6 +160,7 @@ class _TripPrePlanningPageState extends State<TripPrePlanningPage> {
             originalItinerary: _itinerary,
             resultItinerary: resultItinerary,
             preserveExisting: widget.preserveExisting,
+            itineraryId: _itinerary.id, // 傳入行程ID
           ),
         ),
       );

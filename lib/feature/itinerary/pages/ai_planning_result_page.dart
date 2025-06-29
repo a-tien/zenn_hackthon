@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/itinerary.dart';
 import '../models/spot.dart';
 import '../models/itinerary_day.dart';
@@ -7,17 +8,20 @@ import '../components/transportation_segment.dart';
 import '../services/itinerary_service.dart';
 import '../../common/widgets/login_required_dialog.dart';
 import '../../common/services/firestore_service.dart';
+import 'update_firestore.dart';
 
 class AIPlanningResultPage extends StatefulWidget {
   final Itinerary originalItinerary;
   final Itinerary resultItinerary;
   final bool preserveExisting;
+  final String? itineraryId;
 
   const AIPlanningResultPage({
     super.key,
     required this.originalItinerary,
     required this.resultItinerary,
     required this.preserveExisting,
+    required this.itineraryId,
   });
 
   @override
@@ -168,6 +172,35 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
     }
   }
 
+  // Firestore 更新行程
+  Future<void> _updateItineraryToFirestore() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final itineraryId = widget.itineraryId;
+    final jsonResult = _resultItinerary.toJson();
+
+    if (userId == null || itineraryId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('使用者ID或行程ID為空，無法更新Firestore')),
+      );
+      return;
+    }
+
+    try {
+      await updateItineraryPartial(userId, itineraryId, jsonResult);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('成功寫入 Firestore')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Firestore 更新失敗: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -256,7 +289,7 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
                 // 更新至我的行程
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _saveAndUpdateItinerary,
+                    onPressed: _updateItineraryToFirestore,
                     icon: const Icon(Icons.check),
                     label: const Text('更新至我的行程'),
                     style: ElevatedButton.styleFrom(
