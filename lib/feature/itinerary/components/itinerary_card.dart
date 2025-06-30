@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/itinerary.dart';
+import '../../../utils/app_localizations.dart';
 
 class ItineraryCard extends StatelessWidget {
   final Itinerary itinerary;
@@ -13,6 +14,8 @@ class ItineraryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       clipBehavior: Clip.antiAlias,
@@ -55,8 +58,8 @@ class ItineraryCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     itinerary.useDateRange 
-                        ? "${_formatDate(itinerary.startDate)}-${_formatDate(itinerary.endDate)} (${_calculateDays(itinerary)}天)"
-                        : "${itinerary.days}天",
+                        ? "${_formatDate(itinerary.startDate)}-${_formatDate(itinerary.endDate)} (${_calculateDays(itinerary)}${localizations?.days ?? '日'})"
+                        : "${itinerary.days}${localizations?.days ?? '日'}",
                     style: TextStyle(
                       color: Colors.grey[700],
                       fontSize: 14,

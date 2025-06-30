@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_localizations.dart';
 import '../models/favorite_collection.dart';
 import '../models/favorite_spot.dart';
 import '../services/favorite_service.dart';
@@ -63,12 +64,12 @@ class _FavoritePageState extends State<FavoritePage> {
         return;
       }
       
-      print('載入收藏時出錯: $e');
+      print('Error loading favorites: $e'); // 載入收藏時出錯
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入失敗: $e')),
-        );
-      }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.getFavoriteLoadError(e.toString()))),
+          );
+        }
     }
   }  // 添加新收藏集
   void _addNewCollection() async {
@@ -79,23 +80,23 @@ class _FavoritePageState extends State<FavoritePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('新增收藏集'),
+          title: Text(AppLocalizations.of(context)!.addNewCollection),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: '收藏集名稱',
-                  hintText: '例如: 北海道必去景點',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.collectionName,
+                  hintText: AppLocalizations.of(context)!.collectionNameHint,
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: '收藏集說明',
-                  hintText: '例如: 北海道旅遊規劃',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.collectionDescription,
+                  hintText: AppLocalizations.of(context)!.collectionDescriptionHint,
                 ),
                 maxLines: 2,
               ),
@@ -104,13 +105,13 @@ class _FavoritePageState extends State<FavoritePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('取消'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
               onPressed: () {
                 if (nameController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('請輸入收藏集名稱')),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.pleaseEnterCollectionName)),
                   );
                   return;
                 }
@@ -123,7 +124,7 @@ class _FavoritePageState extends State<FavoritePage> {
                 backgroundColor: Colors.blueAccent,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('確定'),
+              child: Text(AppLocalizations.of(context)!.confirm),
             ),
           ],
         );
@@ -145,7 +146,7 @@ class _FavoritePageState extends State<FavoritePage> {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('已創建收藏集「${createdCollection.name}」')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.getCollectionCreated(createdCollection.name))),
           );
           // 重新載入收藏集列表
           _loadCollections();
@@ -159,13 +160,11 @@ class _FavoritePageState extends State<FavoritePage> {
             );
           }
           return;
-        }
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('創建收藏集失敗: $e')),
-          );
-        }
+        }          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppLocalizations.of(context)!.getCreateCollectionError(e.toString()))),
+            );
+          }
       }
     }
   }
@@ -174,7 +173,7 @@ class _FavoritePageState extends State<FavoritePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('我的收藏'),
+        title: Text(AppLocalizations.of(context)!.myFavorites),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -182,7 +181,7 @@ class _FavoritePageState extends State<FavoritePage> {
           // 新增按鈕
           TextButton.icon(
             icon: const Icon(Icons.add, size: 16),
-            label: const Text('新增'),
+            label: Text(AppLocalizations.of(context)!.addButton),
             style: TextButton.styleFrom(
               foregroundColor: Colors.blueAccent,
             ),
@@ -217,25 +216,24 @@ class _FavoritePageState extends State<FavoritePage> {
             color: Colors.blueGrey,
           ),
           const SizedBox(height: 16),
-          const Text(
-            "您的收藏",
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.yourCollections,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              "目前尚無收藏集，點擊右上角的「+新增」按鈕建立您的第一個收藏集。",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.blueGrey,
+          const SizedBox(height: 16),            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                AppLocalizations.of(context)!.emptyCollectionMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.blueGrey,
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _addNewCollection,
@@ -244,7 +242,7 @@ class _FavoritePageState extends State<FavoritePage> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text('建立收藏集'),
+            child: Text(AppLocalizations.of(context)!.createCollection),
           ),
         ],
       ),
@@ -260,12 +258,12 @@ class _FavoritePageState extends State<FavoritePage> {
           children: [
             const Icon(Icons.map, size: 80, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text(
-              "地圖視圖",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              AppLocalizations.of(context)!.mapView,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text("此處將顯示收藏地點的地圖視圖", style: TextStyle(color: Colors.grey[600])),
+            Text(AppLocalizations.of(context)!.mapViewDescription, style: TextStyle(color: Colors.grey[600])),
           ],
         ),
       );

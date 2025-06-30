@@ -7,6 +7,7 @@ import '../models/destination.dart';
 import '../services/itinerary_service.dart';
 import '../../common/widgets/login_required_dialog.dart';
 import 'select_destinations_page.dart';
+import '../../../utils/app_localizations.dart';
 
 class AddItineraryPage extends StatefulWidget {
   const AddItineraryPage({super.key});
@@ -51,8 +52,9 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
     if (_formKey.currentState!.validate()) {
       // 檢查是否至少選擇了一個目的地
       if (_selectedDestinations.isEmpty) {
+        final localizations = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('請至少選擇一個目的地')),
+          SnackBar(content: Text(localizations?.pleaseSelectAtLeastOneDestination ?? '請至少選擇一個目的地')),
         );
         return;
       }
@@ -93,9 +95,10 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
         if (e.toString().contains('需要登入')) {
           // 顯示登入提示對話框
           if (mounted) {
+            final localizations = AppLocalizations.of(context);
             showDialog(
               context: context,
-              builder: (context) => const LoginRequiredDialog(feature: '建立行程'),
+              builder: (context) => LoginRequiredDialog(feature: localizations?.createItineraryFeature ?? '建立行程'),
             );
           }
           return;
@@ -103,8 +106,9 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
         
         print('建立行程時出錯: $e');
         if (mounted) {
+          final localizations = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('建立失敗: $e')),
+            SnackBar(content: Text('${localizations?.createFailed ?? '建立失敗: '}$e')),
           );
         }
       }
@@ -149,6 +153,8 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
 
   // 構建目的地選擇區塊
   Widget _buildDestinationSection() {
+    final localizations = AppLocalizations.of(context);
+    
     if (_selectedDestinations.isEmpty) {
       // 顯示新增目的地按鈕
       return GestureDetector(
@@ -175,7 +181,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
               ),
               const SizedBox(width: 8),
               Text(
-                '新增目的地+',
+                localizations?.addDestination ?? '新增目的地+',
                 style: TextStyle(
                   color: Colors.grey.shade600,
                   fontSize: 16,
@@ -236,6 +242,8 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
 
   // 構建新增目的地標籤
   Widget _buildAddDestinationChip() {
+    final localizations = AppLocalizations.of(context);
+    
     return GestureDetector(
       onTap: _openDestinationSelector,
       child: Container(
@@ -255,7 +263,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
             ),
             const SizedBox(width: 4),
             Text(
-              '新增+',
+              localizations?.add ?? '新增+',
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
@@ -294,9 +302,11 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('新增行程'),
+        title: Text(localizations?.addItinerary ?? '旅程を追加'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -311,9 +321,9 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 100), // 底部留空給按鈕
                 children: [
                   // 1. 行程名稱 - 標題與內容分離
-                  const Text(
-                    '行程名稱',
-                    style: TextStyle(
+                  Text(
+                    localizations?.itineraryName ?? '行程名稱',
+                    style: const TextStyle(
                       fontSize: 16, 
                       fontWeight: FontWeight.w500,
                     ),
@@ -321,14 +331,14 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      hintText: '請輸入此次行程的名稱',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: InputDecoration(
+                      hintText: localizations?.enterItineraryNameHint ?? '請輸入此次行程的名稱',
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return '請輸入行程名稱';
+                        return localizations?.pleaseEnterItineraryName ?? '請輸入行程名稱';
                       }
                       return null;
                     },
@@ -336,9 +346,9 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                   const SizedBox(height: 24),
                   
                   // 2. 行程日程 - 標題與內容分離
-                  const Text(
-                    '行程日程',
-                    style: TextStyle(
+                  Text(
+                    localizations?.itinerarySchedule ?? '行程日程',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -364,8 +374,8 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               alignment: Alignment.center,
-                              child: Text(
-                                '天數',
+                              child:                              Text(
+                                localizations?.daysLabel ?? '天數',
                                 style: TextStyle(
                                   color: !_useDateRange ? Colors.white : Colors.black,
                                   fontWeight: FontWeight.w500,
@@ -384,8 +394,8 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               alignment: Alignment.center,
-                              child: Text(
-                                '日期',
+                              child:                              Text(
+                                localizations?.dateLabel ?? '日期',
                                 style: TextStyle(
                                   color: _useDateRange ? Colors.white : Colors.black,
                                   fontWeight: FontWeight.w500,
@@ -411,8 +421,8 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                               border: Border.all(color: Colors.grey.shade300),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text(
-                              '$_days 天',
+                            child:                            Text(
+                              localizations?.getDaysFormat(_days) ?? '$_days 天',
                               style: const TextStyle(fontSize: 16),
                             ),
                           ),
@@ -448,10 +458,10 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                             const Icon(Icons.date_range, size: 20),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text(
+                              child:                              Text(
                                 _dateRange != null
-                                    ? '${DateFormat('yyyy/MM/dd').format(_dateRange!.start)} - ${DateFormat('yyyy/MM/dd').format(_dateRange!.end)} (${_calculateDays()}天)'
-                                    : '選擇日期範圍',
+                                    ? '${DateFormat('yyyy/MM/dd').format(_dateRange!.start)} - ${DateFormat('yyyy/MM/dd').format(_dateRange!.end)} (${localizations?.getDaysFormat(_calculateDays()) ?? '${_calculateDays()}天'})'
+                                    : localizations?.selectDateRange ?? '選擇日期範圍',
                                 style: const TextStyle(fontSize: 16),
                               ),
                             ),
@@ -461,9 +471,9 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                     ),
                   const SizedBox(height: 24),
                     // 3. 目的地 - 標題與內容分離
-                  const Text(
-                    '目的地',
-                    style: TextStyle(
+                  Text(
+                    localizations?.destinations ?? '目的地',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -473,9 +483,9 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                   const SizedBox(height: 24),
                   
                   // 4. 主要交通方式 - 標題與內容分離
-                  const Text(
-                    '主要交通方式',
-                    style: TextStyle(
+                  Text(
+                    localizations?.mainTransportation ?? '主要交通方式',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -495,7 +505,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                       items: _transportationOptions.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text(value),
+                          child: Text(localizations?.getTransportationOption(value) ?? value),
                         );
                       }).toList(),
                       onChanged: (newValue) {
@@ -505,7 +515,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return '請選擇主要交通方式';
+                          return localizations?.pleaseSelectMainTransportation ?? '請選擇主要交通方式';
                         }
                         return null;
                       },
@@ -514,9 +524,9 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                   const SizedBox(height: 24),
                   
                   // 5. 旅遊型態 - 標題與內容分離
-                  const Text(
-                    '旅遊型態',
-                    style: TextStyle(
+                  Text(
+                    localizations?.travelPattern ?? '旅遊型態',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -536,7 +546,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                       items: _travelTypeOptions.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text(value),
+                          child: Text(localizations?.getTravelTypeOption(value) ?? value),
                         );
                       }).toList(),
                       onChanged: (newValue) {
@@ -546,7 +556,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return '請選擇旅遊型態';
+                          return localizations?.pleaseSelectTravelType ?? '請選擇旅遊型態';
                         }
                         return null;
                       },
@@ -582,9 +592,9 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      '建立行程',
-                      style: TextStyle(
+                    child: Text(
+                      localizations?.createItinerary ?? '建立行程',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),

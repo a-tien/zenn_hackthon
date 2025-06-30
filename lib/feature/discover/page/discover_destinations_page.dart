@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../itinerary/models/destination.dart';
 import '../../itinerary/services/destination_service.dart';
+import '../../../utils/app_localizations.dart';
 
 class DiscoverDestinationsPage extends StatefulWidget {
   const DiscoverDestinationsPage({super.key});
@@ -43,10 +44,12 @@ class _DiscoverDestinationsPageState extends State<DiscoverDestinationsPage>
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('選擇地區'),
+        title: Text(localizations?.selectArea ?? 'エリア選択'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -65,9 +68,9 @@ class _DiscoverDestinationsPageState extends State<DiscoverDestinationsPage>
               labelColor: Colors.blueAccent,
               unselectedLabelColor: Colors.grey,
               indicatorColor: Colors.blueAccent,
-              tabs: const [
-                Tab(text: '熱門地點'),
-                Tab(text: '探索地點'),
+              tabs: [
+                Tab(text: localizations?.popularDestinations ?? '人気の場所'),
+                Tab(text: localizations?.exploreNewPlaces ?? '場所を探索'),
               ],
             ),
           ),

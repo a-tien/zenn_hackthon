@@ -29,7 +29,7 @@ class HomeProductSlider extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 220,
+      height: 260, // 再次增加高度
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -53,7 +53,7 @@ class HomeProductSlider extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 圖片
+                    // 圖片 - 固定高度
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(16),
@@ -94,82 +94,86 @@ class HomeProductSlider extends StatelessWidget {
                       ),
                     ),
                     
-                    // 內容
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 標題
-                            Text(
-                              item.title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            
-                            // 描述（如果有的話）
-                            if (item.description.isNotEmpty) ...[
-                              const SizedBox(height: 4),
+                    // 內容 - 使用固定高度 Container
+                    Container(
+                      height: 100, // 固定文字區域高度
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // 上半部：標題和描述
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 標題
                               Text(
-                                item.description,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
+                                item.title,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            ],
-                            
-                            const Spacer(),
-                            
-                            // 評分和類型
-                            Row(
-                              children: [
-                                if (item.rating > 0) ...[
-                                  Icon(
-                                    Icons.star,
-                                    size: 14,
-                                    color: Colors.amber[600],
+                              
+                              // 描述（如果有的話）
+                              if (item.description.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  item.description,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[600],
                                   ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    item.rating.toStringAsFixed(1),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[700],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                                
-                                Expanded(
-                                  child: Text(
-                                    _getCategoryName(item.category),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey[500],
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                
-                                // 箭頭圖示
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 12,
-                                  color: Colors.grey[400],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                          
+                          // 下半部：評分和類型
+                          Row(
+                            children: [
+                              if (item.rating > 0) ...[
+                                Icon(
+                                  Icons.star,
+                                  size: 12,
+                                  color: Colors.amber[600],
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  item.rating.toStringAsFixed(1),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              
+                              Expanded(
+                                child: Text(
+                                  _getCategoryName(item.category),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey[500],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              
+                              // 箭頭圖示
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 10,
+                                color: Colors.grey[400],
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],

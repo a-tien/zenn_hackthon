@@ -214,6 +214,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
+  flutter_localizations:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -276,10 +281,10 @@ packages:
     dependency: "direct main"
     description:
       name: google_maps_flutter_web
-      sha256: a9822dbf31a3f76f239f6bda346511b051d3edf739806e9091be2729e8b645de
+      sha256: ce2cac714e5462bf761ff2fdfc3564c7e5d7ed0578268dccb0a54dbdb1e6214e
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.12+1"
+    version: "0.5.12+2"
   html:
     dependency: transitive
     description:
@@ -308,10 +313,10 @@ packages:
     dependency: "direct main"
     description:
       name: intl
-      sha256: "3bc132a9dbce73a7e4a21a17d06e1878839ffbf975568bc875c60537824b0c4d"
+      sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
       url: "https://pub.dev"
     source: hosted
-    version: "0.18.1"
+    version: "0.20.2"
   js:
     dependency: transitive
     description:

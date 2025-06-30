@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_localizations.dart';
 import '../models/favorite_collection.dart';
 
 class CollectionCard extends StatelessWidget {
@@ -54,7 +55,7 @@ class CollectionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${collection.spotIds.length} 個景點',
+                      AppLocalizations.of(context)!.getSpotsCount(collection.spotIds.length),
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],

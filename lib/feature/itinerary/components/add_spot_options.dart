@@ -4,6 +4,7 @@ import '../../collection/pages/favorite_page.dart';
 import '../models/itinerary.dart';
 import '../models/destination.dart';
 import '../../../main.dart';
+import '../../../utils/app_localizations.dart';
 
 class AddSpotOptions extends StatelessWidget {
   final bool isInsert;
@@ -17,6 +18,8 @@ class AddSpotOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: const BoxDecoration(
@@ -31,7 +34,7 @@ class AddSpotOptions extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isInsert ? '插入新景點' : '添加景點',
+            isInsert ? (localizations?.insertNewSpot ?? '插入新景點') : (localizations?.addSpot ?? '添加景點'),
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -46,28 +49,28 @@ class AddSpotOptions extends StatelessWidget {
               _buildOptionButton(
                 context,
                 Icons.map,
-                '從地圖搜尋',
+                localizations?.searchFromMap ?? '從地圖搜尋',
                 Colors.green.shade700,
                 () => _navigateToMapSearch(context),
               ),
               _buildOptionButton(
                 context,
                 Icons.search,
-                '區域搜尋',
+                localizations?.regionSearch ?? '區域搜尋',
                 Colors.blue.shade700,
                 () => _navigateToRegionSearch(context),
               ),
               _buildOptionButton(
                 context,
                 Icons.bookmark,
-                '從收藏選擇',
+                localizations?.selectFromFavorites ?? '從收藏選擇',
                 Colors.orange.shade700,
                 () => _navigateToFavorites(context),
               ),
               _buildOptionButton(
                 context,
                 Icons.auto_awesome,
-                '智慧推薦',
+                localizations?.smartRecommendation ?? '智慧推薦',
                 Colors.purple.shade700,
                 () => _showSmartRecommendation(context),
               ),
@@ -196,6 +199,7 @@ class AddSpotOptions extends StatelessWidget {
 
   // 顯示智慧推薦（暫時保持原樣）
   void _showSmartRecommendation(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     // 由於只顯示 SnackBar，我們可以先關閉對話框再顯示
     Navigator.pop(context); // 關閉底部對話框
     
@@ -205,9 +209,9 @@ class AddSpotOptions extends StatelessWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
       if (scaffoldMessenger.mounted) {
         scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('智慧推薦功能開發中...'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(localizations?.smartRecommendationInDevelopment ?? '智慧推薦功能開發中...'),
+            duration: const Duration(seconds: 2),
           ),
         );
       }

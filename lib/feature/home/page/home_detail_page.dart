@@ -7,6 +7,7 @@ import '../../itinerary/models/itinerary_day.dart';
 import '../../itinerary/models/spot.dart';
 import '../../itinerary/components/spot_card.dart';
 import '../../itinerary/components/transportation_segment.dart';
+import '../../../utils/app_localizations.dart';
 
 class HomeDetailPage extends StatefulWidget {
   final String imageUrl;
@@ -191,36 +192,33 @@ class _HomeDetailPageState extends State<HomeDetailPage>
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(),
         title: Text(widget.title),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: '介紹'),
-            Tab(text: '行程'),
-            Tab(text: '附近景點'),
+          tabs: [
+            Tab(text: localizations?.introductionTab ?? '介紹'),
+            Tab(text: localizations?.itineraryTab ?? '行程'),
+            Tab(text: localizations?.nearbyTab ?? '附近景點'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          // 介紹 Tab
-          _buildIntroductionTab(),
-          // 行程 Tab
+          _buildIntroductionTab(localizations),
           _buildItineraryTab(),
-          // 附近景點 Tab
-          _buildNearbyPlacesTab(),
+          _buildNearbyPlacesTab(localizations),
         ],
       ),
     );
   }
 
-  Widget _buildIntroductionTab() {
+  Widget _buildIntroductionTab(AppLocalizations? localizations) {
     final item = widget.itemModel;
-    
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,13 +245,11 @@ class _HomeDetailPageState extends State<HomeDetailPage>
               },
             ),
           ),
-          
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 標題
                 Text(
                   widget.title,
                   style: const TextStyle(
@@ -261,10 +257,7 @@ class _HomeDetailPageState extends State<HomeDetailPage>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                
                 const SizedBox(height: 8),
-                
-                // 評分和類型
                 if (item != null) ...[
                   Row(
                     children: [
@@ -284,18 +277,14 @@ class _HomeDetailPageState extends State<HomeDetailPage>
                         ),
                         const SizedBox(width: 16),
                       ],
-                      
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.blue[100],
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          _getCategoryName(item.category),
+                          _getCategoryName(item.category, localizations),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.blue[800],
@@ -305,95 +294,61 @@ class _HomeDetailPageState extends State<HomeDetailPage>
                       ),
                     ],
                   ),
-                  
                   const SizedBox(height: 12),
-                  
-                  // 地址
                   if (item.address.isNotEmpty) ...[
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
+                        Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             item.address,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
+                            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
                   ],
-                  
-                  // 建議遊覽時間
                   Row(
                     children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
+                      Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                       const SizedBox(width: 4),
                       Text(
-                        '建議遊覽時間：${item.estimatedVisitHours} 小時',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        '${localizations?.suggestedVisitTime ?? '建議遊覽時間'}：${item.estimatedVisitHours} ${localizations?.hours ?? '小時'}',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
-                  
                   const SizedBox(height: 16),
                 ],
-                
-                // 描述
                 if (item?.description.isNotEmpty == true) ...[
-                  const Text(
-                    '景點介紹',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Text(
+                    localizations?.introduction ?? '景點介紹',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     item!.description,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
+                    style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
                 ] else ...[
-                  const Text(
-                    '這是一個值得探索的精彩景點，等待著您的到來。在這裡，您可以體驗到獨特的文化魅力和美麗的風景。',
-                    style: TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
+                  Text(
+                    localizations?.defaultDescription ?? '這是一個值得探索的精彩景點，等待著您的到來。在這裡，您可以體驗到獨特的文化魅力和美麗的風景。',
+                    style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
                 ],
-                
                 const SizedBox(height: 24),
-                
-                // 操作按鈕
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          _tabController.animateTo(1); // 切換到行程分頁
+                          _tabController.animateTo(1);
                         },
                         icon: const Icon(Icons.add),
-                        label: const Text('加入行程'),
+                        label: Text(localizations?.addToItinerary ?? '加入行程'),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -402,13 +357,12 @@ class _HomeDetailPageState extends State<HomeDetailPage>
                     const SizedBox(width: 12),
                     OutlinedButton.icon(
                       onPressed: () {
-                        // 分享功能
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('分享功能尚未實現')),
+                          SnackBar(content: Text(localizations?.shareNotImplemented ?? '分享功能尚未實現')),
                         );
                       },
                       icon: const Icon(Icons.share),
-                      label: const Text('分享'),
+                      label: Text(localizations?.share ?? '分享'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -434,7 +388,7 @@ class _HomeDetailPageState extends State<HomeDetailPage>
     );
   }
 
-  Widget _buildNearbyPlacesTab() {
+  Widget _buildNearbyPlacesTab(AppLocalizations? localizations) {
     return Column(
       children: [
         // 標題
@@ -445,17 +399,12 @@ class _HomeDetailPageState extends State<HomeDetailPage>
               const Icon(Icons.place, color: Colors.blue),
               const SizedBox(width: 8),
               Text(
-                '附近景點推薦',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
+                localizations?.nearbyRecommendations ?? '附近景點推薦',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[800]),
               ),
             ],
           ),
         ),
-        
         // 載入中或錯誤訊息
         if (isLoading)
           const Expanded(
@@ -561,7 +510,7 @@ class _HomeDetailPageState extends State<HomeDetailPage>
                               const SizedBox(width: 8),
                             ],
                             Text(
-                              _getCategoryName(place.category),
+                              _getCategoryName(place.category, localizations),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey[500],
@@ -635,26 +584,26 @@ class _HomeDetailPageState extends State<HomeDetailPage>
     );
   }
 
-  String _getCategoryName(String category) {
+  String _getCategoryName(String category, AppLocalizations? localizations) {
     switch (category.toLowerCase()) {
       case 'tourist_attraction':
-        return '景點';
+        return localizations?.attractions ?? '景點';
       case 'museum':
-        return '博物館';
+        return localizations?.museum ?? '博物館';
       case 'park':
-        return '公園';
+        return localizations?.park ?? '公園';
       case 'temple':
-        return '寺廟';
+        return localizations?.temple ?? '寺廟';
       case 'shopping':
-        return '購物';
+        return localizations?.shopping ?? '購物';
       case 'restaurant':
-        return '餐廳';
+        return localizations?.restaurants ?? '餐廳';
       case 'entertainment':
-        return '娛樂';
+        return localizations?.entertainment ?? '娛樂';
       case 'natural_feature':
-        return '自然景觀';
+        return localizations?.naturalFeature ?? '自然景觀';
       default:
-        return '景點';
+        return localizations?.attractions ?? '景點';
     }
   }
 }

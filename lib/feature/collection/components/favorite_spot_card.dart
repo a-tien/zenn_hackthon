@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_localizations.dart';
 import '../models/favorite_spot.dart';
 
 class FavoriteSpotCard extends StatelessWidget {
@@ -165,7 +166,7 @@ class FavoriteSpotCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text('詳細介紹'),
+                          child: Text(AppLocalizations.of(context)!.detailedIntroduction),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -180,7 +181,7 @@ class FavoriteSpotCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text('加入行程'),
+                          child: Text(AppLocalizations.of(context)!.addToItinerary),
                         ),
                       ),
                       // 移除按鈕（如果提供了回調）
@@ -190,7 +191,7 @@ class FavoriteSpotCard extends StatelessWidget {
                           onPressed: onRemove,
                           icon: const Icon(Icons.remove_circle_outline),
                           color: Colors.red,
-                          tooltip: '從收藏集移除',
+                          tooltip: AppLocalizations.of(context)!.removeFromCollectionTooltip,
                         ),
                       ],
                     ],

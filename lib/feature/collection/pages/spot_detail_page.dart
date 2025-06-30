@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../utils/app_localizations.dart';
 import '../models/favorite_spot.dart';
 import '../models/detailed_favorite_spot.dart';
 import '../components/nearby_spot_card.dart';
@@ -58,7 +59,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
       if (mounted) {
         setState(() {
           isLoadingDetails = false;
-          errorMessage = '無法載入景點詳細資訊';
+          errorMessage = AppLocalizations.of(context)!.cannotLoadSpotDetails;
         });
       }
     }
@@ -133,7 +134,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('無法打開地圖應用')));
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.cannotOpenMap)));
       }
     }
   }
@@ -155,7 +156,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
           isFavorited = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('已取消收藏')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.unfavorited)),
         );
       }
     } else {
@@ -184,7 +185,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('語音播放失敗: ${e.toString()}'),
+            content: Text(AppLocalizations.of(context)!.getVoicePlaybackError(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -213,7 +214,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('語音播放失敗: ${e.toString()}'),
+            content: Text(AppLocalizations.of(context)!.getVoicePlaybackError(e.toString())),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -282,7 +283,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                               )
                             : const Icon(Icons.volume_up),
                         onPressed: isPlayingName ? null : () => _textToSpeechName(widget.spot.name),
-                        tooltip: '語音播放',
+                        tooltip: AppLocalizations.of(context)!.voicePlayback,
                       ),
                     ],
                   ),
@@ -313,7 +314,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                               )
                             : const Icon(Icons.volume_up),
                         onPressed: isPlayingAddress ? null : () => _textToSpeechAddress(widget.spot.address),
-                        tooltip: '語音播放',
+                        tooltip: AppLocalizations.of(context)!.voicePlayback,
                       ),
                     ],
                   ),
@@ -366,7 +367,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                                   isFavorited ? Icons.favorite : Icons.favorite_border,
                                   color: isFavorited ? Colors.red : null,
                                 ),
-                                label: Text(isFavorited ? '已收藏' : '收藏'),
+                                label: Text(isFavorited ? AppLocalizations.of(context)!.favorited : AppLocalizations.of(context)!.favorite),
                                 onPressed: _toggleFavorite,
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: isFavorited ? Colors.red : Colors.blueAccent,
@@ -382,7 +383,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                       Expanded(
                         child: OutlinedButton.icon(
                           icon: const Icon(Icons.directions),
-                          label: const Text('導航'),
+                          label: Text(AppLocalizations.of(context)!.navigation),
                           onPressed: _navigateToSpot,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.blueAccent,
@@ -396,7 +397,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                       Expanded(
                         child: ElevatedButton.icon(
                           icon: const Icon(Icons.add),
-                          label: const Text('加入行程'),
+                          label: Text(AppLocalizations.of(context)!.addToItinerary),
                           onPressed: _addToItinerary,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueAccent,
@@ -431,44 +432,44 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                   else if (detailedSpot != null) ...[
                     // 景點描述
                     if (detailedSpot!.description.isNotEmpty) ...[
-                      _buildInfoSection('景點介紹', detailedSpot!.description),
+                      _buildInfoSection(AppLocalizations.of(context)!.spotIntroduction, detailedSpot!.description),
                       const Divider(),
                     ],
                     
                     // 營業時間
                     if (detailedSpot!.openingHours.isNotEmpty) ...[
-                      _buildInfoSection('營業時間', detailedSpot!.openingHours),
+                      _buildInfoSection(AppLocalizations.of(context)!.openingHours, detailedSpot!.openingHours),
                       const Divider(),
                     ],
                     
                     // 聯絡資訊
                     if (detailedSpot!.phone.isNotEmpty) ...[
-                      _buildInfoSection('電話', detailedSpot!.phone),
+                      _buildInfoSection(AppLocalizations.of(context)!.phone, detailedSpot!.phone),
                       const Divider(),
                     ],
                     
                     // 網站
                     if (detailedSpot!.website.isNotEmpty) ...[
-                      _buildInfoSection('網站', detailedSpot!.website),
+                      _buildInfoSection(AppLocalizations.of(context)!.website, detailedSpot!.website),
                       const Divider(),
                     ],
                     
                     // 評論數量
                     if (detailedSpot!.reviewCount > 0) ...[
-                      _buildInfoSection('評論數量', '${detailedSpot!.reviewCount} 則評論'),
+                      _buildInfoSection(AppLocalizations.of(context)!.reviewCount, AppLocalizations.of(context)!.getReviewsCount(detailedSpot!.reviewCount)),
                       const Divider(),
                     ],
                   ] else ...[
                     // 顯示基本資訊
-                    _buildInfoSection('地址', widget.spot.address),
+                    _buildInfoSection(AppLocalizations.of(context)!.address, widget.spot.address),
                     const Divider(),
                   ],
 
                   // 附近推薦
                   const SizedBox(height: 16),
-                  const Text(
-                    '附近推薦',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    AppLocalizations.of(context)!.nearbyRecommendations,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
 
@@ -490,7 +491,7 @@ class _SpotDetailPageState extends State<SpotDetailPage> {
                                   // 點擊附近景點的處理
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('查看${spot['name']}'),
+                                      content: Text(AppLocalizations.of(context)!.getViewSpot(spot['name'])),
                                     ),
                                   );
                                 },

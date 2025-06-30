@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_localizations.dart';
 
 enum PlanningOption {
   overwrite,
@@ -24,9 +25,9 @@ class PlanningOptionDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              '您希望？',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.planningOptionTitle,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -39,8 +40,8 @@ class PlanningOptionDialog extends StatelessWidget {
             _buildOptionButton(
               context,
               icon: Icons.refresh,
-              title: '覆蓋現有行程，進行完整規劃',
-              description: '刪除所有已選的景點，重新規劃整個行程',
+              title: AppLocalizations.of(context)!.overwriteOption,
+              description: AppLocalizations.of(context)!.overwriteDescription,
               color: Colors.blueAccent,              onTap: () {
                 print('Option selected: overwrite'); // 添加日誌
                 onOptionSelected(PlanningOption.overwrite);
@@ -54,8 +55,8 @@ class PlanningOptionDialog extends StatelessWidget {
             _buildOptionButton(
               context,
               icon: Icons.add_circle,
-              title: '保留已選的行程進行規劃',
-              description: '根據已選景點，繼續規劃其他景點和活動',
+              title: AppLocalizations.of(context)!.preserveOption,
+              description: AppLocalizations.of(context)!.preserveDescription,
               color: Colors.green,              onTap: () {
                 print('Option selected: preserve'); // 添加日誌
                 onOptionSelected(PlanningOption.preserve);
@@ -70,7 +71,7 @@ class PlanningOptionDialog extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('取消'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
           ],
         ),

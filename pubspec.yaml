@@ -30,9 +30,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   shared_preferences: ^2.2.2
   url_launcher: ^6.1.0
-  intl: ^0.18.1
+  intl: ^0.20.2
   firebase_core: ^2.20.0
   cloud_firestore: ^4.15.0
   firebase_auth: ^4.17.9
@@ -63,6 +65,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  # 啟用國際化生成
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

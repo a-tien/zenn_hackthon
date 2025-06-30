@@ -7,6 +7,7 @@ import '../model/home_item_model.dart';
 import 'chat_demo_app.dart';
 import 'home_detail_page.dart';
 import '../../itinerary/models/itinerary.dart';
+import '../../../utils/app_localizations.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -160,119 +161,108 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: _refreshRecommendations,
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 32),
-                  const Text(
-                    "哈囉，\n今天想去哪裡呢?",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  if (errorMessage.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.orange[100],
-                        borderRadius: BorderRadius.circular(8),
+    final localizations = AppLocalizations.of(context);
+    
+    return Scaffold(
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refreshRecommendations,
+          child: ListView(
+            padding: const EdgeInsets.only(top: 16), // 調整上方間距
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 移除語言切換按鈕
+                    const SizedBox(height: 16),
+                    Text(
+                      localizations?.welcomeMessage ?? "こんにちは！\n今日はどこに行きますか？",
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -1,
                       ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.warning, color: Colors.orange[800]),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              errorMessage,
-                              style: TextStyle(
-                                color: Colors.orange[800],
-                                fontSize: 12,
+                    ),
+                    const SizedBox(height: 28),
+                    if (errorMessage.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning, color: Colors.orange[800]),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage,
+                                style: TextStyle(
+                                  color: Colors.orange[800],
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  HomeSectionTitle(title: "為你推薦"),
-                  const SizedBox(height: 12),
-                  if (isLoading)
-                    Container(
-                      height: 200,
-                      child: const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('正在為您推薦景點...'),
                           ],
                         ),
                       ),
-                    )
-                  else
-                    HomeProductSlider(
-                      items: recommendedItems,
-                      onItemTap: _onRecommendedItemTap,
-                    ),
-                  const SizedBox(height: 32),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ChatDemoApp()),
-                      );
-                    },
-                    // child: Container(
-                    //   padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                    //   decoration: BoxDecoration(
-                    //     color: Colors.grey[100],
-                    //     borderRadius: BorderRadius.circular(16),
-                    //     boxShadow: [
-                    //       BoxShadow(
-                    //         color: Colors.black12,
-                    //         blurRadius: 8,
-                    //         offset: Offset(0, 2),
-                    //       ),
-                    //     ],
-                    //   ),
-                      // child: Row(
-                      //   children: const [
-                      //     Icon(Icons.flash_on, color: Colors.black54),
-                      //     SizedBox(width: 12),
-                      //     Expanded(
-                      //       child: Text(
-                      //         "與智能助理聊聊",
-                      //         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                      //       ),
-                      //     ),
-                      //     Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black26),
-                      //   ],
-                      // ),
-                    // ),
-                  ),
-                  const SizedBox(height: 32),
-                  HomeSectionTitle(title: "熱門活動"),
-                  const SizedBox(height: 12),
-                  HomeProductSlider(
-                    items: popularItems,
-                    onItemTap: _onRecommendedItemTap,
-                  ),
-                ],
+                    HomeSectionTitle(title: localizations?.exploreNewPlaces ?? "新しい場所を探索"),
+                    const SizedBox(height: 12),
+                  ],
+                ),
               ),
-            ),
-          ],
+              // 推薦內容區域 - 移出 Container 避免 padding 重疊
+              if (isLoading)
+                Container(
+                  height: 200,
+                  child: const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 8),
+                        Text('おすすめスポットを探しています...'),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                HomeProductSlider(
+                  items: recommendedItems,
+                  onItemTap: _onRecommendedItemTap,
+                ),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ChatDemoApp()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    HomeSectionTitle(title: localizations?.popularDestinations ?? "人気の目的地"),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
+              // 熱門內容區域
+              HomeProductSlider(
+                items: popularItems,
+                onItemTap: _onRecommendedItemTap,
+              ),
+              const SizedBox(height: 32), // 底部間距
+            ],
+          ),
         ),
       ),
     );

@@ -9,6 +9,7 @@ import '../../collection/components/add_to_itinerary_dialog.dart';
 import '../../itinerary/models/destination.dart';
 import '../components/add_to_collection_dialog.dart';
 import '../services/places_api_service.dart';
+import '../../../utils/app_localizations.dart';
 
 enum SortType {
   rating,
@@ -511,17 +512,18 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   void _showSortOptions() async {
+    final localizations = AppLocalizations.of(context);
     SortType tempSort = _selectedSort;
     SortType? result = await showDialog<SortType>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('推薦排序'),
+          title: Text(localizations?.sortByRating ?? '並び替え'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               RadioListTile<SortType>(
-                title: const Text('評論 (高→低)'),
+                title: Text(localizations?.sortByRating ?? '評価順 (高→低)'),
                 value: SortType.rating,
                 groupValue: tempSort,
                 onChanged: (value) {
@@ -531,7 +533,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                 },
               ),
               RadioListTile<SortType>(
-                title: const Text('距離 (近→遠)'),
+                title: Text(localizations?.sortByDistance ?? '距離順 (近→遠)'),
                 value: SortType.distance,
                 groupValue: tempSort,
                 onChanged: (value) {
@@ -545,7 +547,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, tempSort),
-              child: const Text('確定'),
+              child: Text(localizations?.confirm ?? '確定'),
             ),
           ],
         );
@@ -1148,6 +1150,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Widget _buildSearchBar() {
+    final localizations = AppLocalizations.of(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1165,7 +1169,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                 onPressed: _navigateToSelectArea,
                 icon: const Icon(Icons.place, color: Colors.blueAccent),
                 label: Text(
-                  _selectedDestination?.name ?? '選地區',
+                  _selectedDestination?.name ?? (localizations?.selectArea ?? 'エリア選択'),
                   style: const TextStyle(color: Colors.blueAccent),
                 ),
               ),
@@ -1182,8 +1186,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: _onSearchChanged,
-                  decoration: const InputDecoration(
-                    hintText: '搜尋地點、美食、景點',
+                  decoration: InputDecoration(
+                    hintText: localizations?.searchPlacesHint ?? '場所、グルメ、観光地を検索',
                     border: InputBorder.none,
                   ),
                 ),
@@ -1208,7 +1212,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         ),
                       )
                     : const Icon(Icons.explore, size: 18),
-                label: Text(_isLoadingSpots ? '載入中...' : '探索這個區域'),
+                label: Text(_isLoadingSpots 
+                    ? (localizations?.loading ?? '読み込み中...') 
+                    : (localizations?.exploreThisArea ?? 'このエリアを探索')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _isLoadingSpots ? Colors.grey : Colors.blue,
                   foregroundColor: Colors.white,
@@ -1225,6 +1231,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
   Widget _buildTypeSelector() {
+    final localizations = AppLocalizations.of(context);
+    
     return Container(
       height: 44,
       decoration: BoxDecoration(
@@ -1287,7 +1295,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    spotType.label,
+                    localizations?.getSpotTypeName(spotType.label) ?? spotType.label,
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.blueAccent,
                       fontWeight: FontWeight.w600,
@@ -1334,6 +1342,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Widget _buildListView() {
+    final localizations = AppLocalizations.of(context);
+    
     // 使用過濾後的景點
     final spots = _filteredSpots;
     if (_selectedSort == SortType.rating) {
@@ -1354,8 +1364,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
                   children: [
                     Text(
                       _selectedDestination != null 
-                        ? "${_selectedDestination!.name}推薦景點"
-                        : "推薦景點",
+                        ? "${_selectedDestination!.name}${localizations?.popularDestinations ?? '人気の目的地'}"
+                        : (localizations?.popularDestinations ?? "人気の目的地"),
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
                     ),
               IconButton(
@@ -1370,8 +1380,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
             child: _buildSpotCard(spot),
           )),
           if (spots.isEmpty)
-            const Center(
-              child: Text('沒有推薦的景點', style: TextStyle(color: Colors.grey)),
+            Center(
+              child: Text(
+                localizations?.exploreNewPlaces ?? 'おすすめスポットがありません', 
+                style: const TextStyle(color: Colors.grey)
+              ),
             ),
           const SizedBox(height: 32),
         ],

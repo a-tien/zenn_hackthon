@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_localizations.dart';
 
 class LoginRequiredDialog extends StatefulWidget {
   final String feature;
@@ -19,12 +20,13 @@ class _LoginRequiredDialogState extends State<LoginRequiredDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     return AlertDialog(
       title: Row(
         children: [
           Icon(Icons.lock_outline, color: Colors.amber),
           const SizedBox(width: 8),
-          const Text('需要登入'),
+          Text(localizations?.loginRequiredTitle ?? '需要登入'),
         ],
       ),
       content: Column(
@@ -32,7 +34,7 @@ class _LoginRequiredDialogState extends State<LoginRequiredDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '使用「${widget.feature}」功能需要先登入帳號',
+            localizations?.loginRequiredMessage(widget.feature) ?? '使用「${widget.feature}」功能需要先登入帳號',
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 16),
@@ -49,16 +51,16 @@ class _LoginRequiredDialogState extends State<LoginRequiredDialog> {
                   children: [
                     Icon(Icons.cloud, color: Colors.blue, size: 20),
                     const SizedBox(width: 8),
-                    const Text(
-                      '雲端同步功能',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    Text(
+                      localizations?.cloudSyncTitle ?? '雲端同步功能',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  '• 資料安全儲存在雲端\n• 多裝置同步存取\n• 永久保存不丟失',
-                  style: TextStyle(fontSize: 14),
+                Text(
+                  localizations?.cloudSyncDesc ?? '• 資料安全儲存在雲端\n• 多裝置同步存取\n• 永久保存不丟失',
+                  style: const TextStyle(fontSize: 14),
                 ),
               ],
             ),
@@ -68,7 +70,7 @@ class _LoginRequiredDialogState extends State<LoginRequiredDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('稍後再說'),
+          child: Text(localizations?.maybeLater ?? '稍後再說'),
         ),
         ElevatedButton(
           onPressed: _isNavigating ? null : () {
@@ -95,10 +97,10 @@ class _LoginRequiredDialogState extends State<LoginRequiredDialog> {
                 
                 if (result == true && mounted) {
                   scaffoldMessenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('登入成功！現在可以使用此功能了'),
+                    SnackBar(
+                      content: Text(localizations?.loginSuccess ?? '登入成功！現在可以使用此功能了'),
                       backgroundColor: Colors.green,
-                      duration: Duration(seconds: 2),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
                   
@@ -111,8 +113,8 @@ class _LoginRequiredDialogState extends State<LoginRequiredDialog> {
                 print('導航到登入頁面時發生錯誤: $e');
                 if (mounted) {
                   scaffoldMessenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('無法跳轉到登入頁面，請稍後再試'),
+                    SnackBar(
+                      content: Text(localizations?.loginFailed ?? '無法跳轉到登入頁面，請稍後再試'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -139,25 +141,9 @@ class _LoginRequiredDialogState extends State<LoginRequiredDialog> {
                   color: Colors.white,
                 ),
               )
-            : const Text('立即登入'),
+            : Text(localizations?.loginNow ?? '立即登入'),
         ),
       ],
-    );
-  }
-
-  /// 顯示登入需求對話框
-  static void show(
-    BuildContext context, 
-    String feature, {
-    VoidCallback? onLoginPressed,
-  }) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => LoginRequiredDialog(
-        feature: feature,
-        onLoginPressed: onLoginPressed,
-      ),
     );
   }
 

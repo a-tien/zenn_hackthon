@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'feature/home/page/home_page.dart';
 import 'feature/discover/page/discover_page.dart';
 import 'feature/itinerary/pages/itinerary_page.dart';
@@ -8,6 +9,7 @@ import 'feature/collection/services/favorite_service.dart';
 import 'feature/itinerary/models/destination.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'utils/app_localizations.dart';
 
 void main() async {
   // 確保 Flutter 引擎初始化完成
@@ -33,21 +35,55 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  static _MyAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>();
+
+  static void setLocale(BuildContext context, Locale newLocale) {
+    _MyAppState? state = context.findAncestorStateOfType<_MyAppState>();
+    state?.setLocale(newLocale);
+  }
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Locale _locale = const Locale('ja', ''); // 預設日文
+
+  void setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '旅遊推薦',
+      title: '旅行推薦',
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        AppLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ja', ''), // 日文
+        Locale('zh', 'TW'), // 繁體中文
+        Locale('en', ''), // 英文
+      ],
+      locale: _locale, // 使用動態語言
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
-          background: Colors.white,
+          surface: Colors.white,
           primary: Colors.black,
         ),
         scaffoldBackgroundColor: Colors.white,
         fontFamily: 'San Francisco',
-      ),      // 定義路由
+      ),      
+      // 定義路由
       routes: {
         '/': (context) => const MainNavigation(),
         '/login': (context) => const LoginPage(),
@@ -79,6 +115,8 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    
     // 如果有初始目的地且當前選中探索標籤，傳遞給 DiscoverPage
     final shouldPassDestination = _selectedIndex == 1 && widget.initialDestination != null;
     
@@ -87,7 +125,7 @@ class _MainNavigationState extends State<MainNavigation> {
     }
     
     final List<Widget> pages = [
-      MyHomePage(),     // 你可以換成 HomePage()
+      MyHomePage(),     // 主頁
       DiscoverPage(
         initialDestination: shouldPassDestination ? widget.initialDestination : null,
         key: shouldPassDestination 
@@ -111,17 +149,25 @@ class _MainNavigationState extends State<MainNavigation> {
             _selectedIndex = index;
           });
         },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '主頁'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: '探索'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: '行程'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home), 
+            label: localizations?.homeTab ?? 'ホーム'
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.search), 
+            label: localizations?.discoverTab ?? '発見'
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.calendar_today), 
+            label: localizations?.itineraryTab ?? '旅程'
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person), 
+            label: localizations?.profileTab ?? 'プロフィール'
+          ),
         ],
       ),
     );
   }
 }
-
-
-
-

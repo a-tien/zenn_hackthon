@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/destination.dart';
 import '../services/destination_service.dart';
+import '../../../utils/app_localizations.dart';
 
 class SelectDestinationsPage extends StatefulWidget {
   final List<Destination> initialSelectedDestinations;
@@ -73,10 +74,12 @@ class _SelectDestinationsPageState extends State<SelectDestinationsPage>
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('選擇目的地'),
+        title: Text(localizations?.selectDestinations ?? '選擇目的地'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,

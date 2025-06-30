@@ -5,6 +5,7 @@ import '../../common/widgets/login_required_dialog.dart';
 import 'add_itinerary_page.dart';
 import 'itinerary_detail_page.dart';
 import '../components/itinerary_card.dart';
+import '../../../utils/app_localizations.dart';
 
 class ItineraryPage extends StatefulWidget {
   const ItineraryPage({super.key});
@@ -69,7 +70,7 @@ class _ItineraryPageState extends State<ItineraryPage> with WidgetsBindingObserv
           showDialog(
             context: context,
             builder: (context) => LoginRequiredDialog(
-              feature: '查看行程列表',
+              feature: '旅程リストを表示',
               onLoginPressed: () {
                 Navigator.of(context).pop();
                 // 重新載入資料
@@ -127,26 +128,28 @@ class _ItineraryPageState extends State<ItineraryPage> with WidgetsBindingObserv
   }
 
   Widget _buildEmptyState() {
+    final localizations = AppLocalizations.of(context);
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.calendar_today, size: 80, color: Colors.blueGrey),
           const SizedBox(height: 16),
-          const Text(
-            "您的行程",
-            style: TextStyle(
+          Text(
+            localizations?.yourItineraries ?? "あなたの旅程",
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              "目前尚無行程喔！點擊下方按鈕新增您的第一個行程。",
+              localizations?.noItinerariesMessage ?? "現在旅程がありません！下のボタンをクリックして最初の旅程を作成してください。",
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.blueGrey,
               ),
@@ -168,9 +171,9 @@ class _ItineraryPageState extends State<ItineraryPage> with WidgetsBindingObserv
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  '建立新行程',
-                  style: TextStyle(
+                child: Text(
+                  localizations?.createNewItinerary ?? '新しい旅程を作成',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -184,6 +187,8 @@ class _ItineraryPageState extends State<ItineraryPage> with WidgetsBindingObserv
   }
 
   Widget _buildCreateButton() {
+    final localizations = AppLocalizations.of(context);
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -207,9 +212,9 @@ class _ItineraryPageState extends State<ItineraryPage> with WidgetsBindingObserv
             borderRadius: BorderRadius.circular(8),
           ),
         ),
-        child: const Text(
-          '建立新行程',
-          style: TextStyle(
+        child: Text(
+          localizations?.createNewItinerary ?? '新しい旅程を作成',
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),

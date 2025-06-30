@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
+import '../../../utils/app_localizations.dart';
 import 'login_page.dart';
 import 'companions_page.dart';
 import 'travel_quiz_page.dart';
 import '../../collection/pages/favorite_page.dart';
+import '../../common/widgets/language_settings_dialog.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -42,11 +44,11 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     } catch (e) {
-      print('載入用戶資料時發生錯誤: $e');
+      print('Error loading user data: $e'); // 載入用戶資料時發生錯誤
       // 發生錯誤時使用遊客資料
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入用戶資料時發生錯誤，使用遊客模式')),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.loadUserDataError}，${AppLocalizations.of(context)!.usingGuestMode}')),
         );
         setState(() {
           _userProfile = UserProfile.guest();
@@ -68,20 +70,21 @@ class _ProfilePageState extends State<ProfilePage> {
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('使用者資料已更新')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.userDataUpdated)),
         );
       }
     } catch (e) {
-      print('刷新使用者資料失敗: $e');
+      print('Failed to refresh user data: $e'); // 刷新使用者資料失敗
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('刷新失敗，請稍後再試')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.refreshFailedTryLater)),
         );
       }
     }
   }
   // 顯示設置菜單
   void _showSettingsMenu() {
+    final localizations = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -93,14 +96,23 @@ class _ProfilePageState extends State<ProfilePage> {
             if (_userProfile.isLoggedIn)
               ListTile(
                 leading: const Icon(Icons.refresh),
-                title: const Text('刷新資料'),
+                title: Text(localizations?.refreshData ?? '刷新資料'),
                 onTap: () {
                   Navigator.pop(context);
                   _refreshUserProfile();
                 },
-              ),            ListTile(
+              ),
+            ListTile(
+              leading: const Icon(Icons.language),
+              title: Text(localizations?.languageSettings ?? '語言設定'),
+              onTap: () {
+                Navigator.pop(context);
+                _showLanguageSettings();
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.settings),
-              title: const Text('設置'),
+              title: Text(localizations?.settings ?? '設定'),
               onTap: () {
                 Navigator.pop(context);
                 // TODO: 導航到設置頁面
@@ -109,7 +121,7 @@ class _ProfilePageState extends State<ProfilePage> {
             if (_userProfile.isLoggedIn)
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('登出', style: TextStyle(color: Colors.red)),
+                title: Text(localizations?.logout ?? '登出', style: const TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(context);
                   _handleLogout();
@@ -135,7 +147,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       // 處理錯誤
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('登出時發生錯誤：$e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.getLogoutError(e.toString()))),
       );
       setState(() {
         _isLoading = false;
@@ -149,9 +161,17 @@ class _ProfilePageState extends State<ProfilePage> {
       MaterialPageRoute(builder: (context) => const LoginPage()),
     ).then((result) {
       // 無論結果如何，都重新加載用戶資料
-      print('從登入頁面返回，重新載入用戶資料');
+      print('Returned from login page, reloading user data'); // 從登入頁面返回，重新載入用戶資料
       _loadUserProfile();
     });
+  }
+
+  // 顯示語言設定對話框
+  void _showLanguageSettings() {
+    showDialog(
+      context: context,
+      builder: (context) => const LanguageSettingsDialog(),
+    );
   }
 
   @override
@@ -162,7 +182,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('個人頁面'),
+        title: Text(AppLocalizations.of(context)!.personalPage),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -223,7 +243,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // 用戶名
               Text(
-                _userProfile.isLoggedIn ? "嗨! ${_userProfile.name}" : "訪客",
+                _userProfile.isLoggedIn ? AppLocalizations.of(context)!.getGreeting(_userProfile.name) : AppLocalizations.of(context)!.guest,
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
 
@@ -256,7 +276,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     const Icon(Icons.map, color: Colors.blueAccent),
                     const SizedBox(width: 8),
                     Text(
-                      "旅行足跡: ${_userProfile.itineraryCount} 個行程",
+                      AppLocalizations.of(context)!.getTravelFootprint(_userProfile.itineraryCount),
                       style: const TextStyle(
                         fontSize: 16,
                         color: Colors.blueAccent,
@@ -282,9 +302,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      "登入",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    child: Text(
+                      AppLocalizations.of(context)!.loginButton,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -300,16 +320,16 @@ class _ProfilePageState extends State<ProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "功能",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        Text(
+          AppLocalizations.of(context)!.functions,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
 
         // 我的收藏
         _buildFunctionButton(
           icon: Icons.favorite,
-          title: "我的收藏",
+          title: AppLocalizations.of(context)!.myFavorites,
           color: Colors.redAccent,
           onTap: () {
             Navigator.push(
@@ -324,7 +344,7 @@ class _ProfilePageState extends State<ProfilePage> {
         // 我的旅伴
         _buildFunctionButton(
           icon: Icons.people,
-          title: "我的旅伴",
+          title: AppLocalizations.of(context)!.myCompanions,
           color: Colors.blueAccent,
           onTap: () {
             Navigator.push(
@@ -337,7 +357,7 @@ class _ProfilePageState extends State<ProfilePage> {
         // 旅遊類型測驗
         _buildFunctionButton(
           icon: Icons.psychology,
-          title: "旅遊類型測驗",
+          title: AppLocalizations.of(context)!.travelTypeQuiz,
           color: Colors.purpleAccent,
           onTap: () {
             Navigator.push(

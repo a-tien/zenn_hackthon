@@ -4,6 +4,7 @@ import '../../collection/models/favorite_spot.dart';
 import '../../collection/services/favorite_service.dart';
 import '../../common/widgets/login_required_dialog.dart';
 import '../../common/services/firestore_service.dart';
+import '../../../utils/app_localizations.dart';
 
 class AddToCollectionDialog extends StatefulWidget {
   final FavoriteSpot spot;
@@ -36,7 +37,7 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
       if (mounted) {
         showDialog(
           context: context,
-          builder: (context) => const LoginRequiredDialog(feature: '收藏功能'),
+          builder: (context) => LoginRequiredDialog(feature: AppLocalizations.of(context)?.favoriteFeature ?? '收藏功能'),
         );
       }
       return;

@@ -24,10 +24,10 @@ class ItineraryService {
         return Itinerary.fromFirestore(data, doc.id);
       }).toList();
     } catch (e) {
-      if (e.toString().contains('此功能需要登入')) {
-        throw Exception('獲取行程列表需要登入');
+      if (e.toString().contains('Login required')) {
+        throw Exception('Login required to get itinerary list');
       }
-      print('獲取行程列表時發生錯誤: $e');
+      print('Error getting itinerary list: $e');
       return [];
     }
   }
@@ -53,11 +53,11 @@ class ItineraryService {
         itinerary.id = docRef.id;
       }
     } catch (e) {
-      if (e.toString().contains('此功能需要登入')) {
-        throw Exception('保存行程需要登入');
+      if (e.toString().contains('Login required')) {
+        throw Exception('Login required to save itinerary');
       }
-      print('保存行程時發生錯誤: $e');
-      throw Exception('保存失敗：${FirestoreService.getErrorMessage(e)}');
+      print('Error saving itinerary: $e');
+      throw Exception('Save failed: ${FirestoreService.getErrorMessage(e)}');
     }
   }
 
@@ -70,11 +70,11 @@ class ItineraryService {
           .doc(itineraryId)
           .delete();
     } catch (e) {
-      if (e.toString().contains('此功能需要登入')) {
-        throw Exception('刪除行程需要登入');
+      if (e.toString().contains('Login required')) {
+        throw Exception('Login required to delete itinerary');
       }
-      print('刪除行程時發生錯誤: $e');
-      throw Exception('刪除失敗：${FirestoreService.getErrorMessage(e)}');
+      print('Error deleting itinerary: $e');
+      throw Exception('Delete failed: ${FirestoreService.getErrorMessage(e)}');
     }
   }
 
@@ -97,7 +97,7 @@ class ItineraryService {
           .get();
       
       if (!doc.exists) {
-        print('找不到行程: $itineraryId');
+        print('Itinerary not found: $itineraryId');
         return false;
       }
       
@@ -121,7 +121,7 @@ class ItineraryService {
       );
       
       if (existingSpotIndex != -1) {
-        print('景點已存在於此行程中');
+        print('Spot already exists in this itinerary');
         return false;
       }
       
@@ -155,13 +155,13 @@ class ItineraryService {
       // 保存更新後的行程
       await saveItinerary(itinerary);
       
-      print('✅ 成功添加景點 ${favoriteSpot.name} 到行程');
+      print('✅ Successfully added spot ${favoriteSpot.name} to itinerary');
       return true;
     } catch (e) {
-      if (e.toString().contains('此功能需要登入')) {
-        throw Exception('加入行程需要登入');
+      if (e.toString().contains('Login required')) {
+        throw Exception('Login required to add to itinerary');
       }
-      print('添加景點到行程時發生錯誤: $e');
+      print('Error adding spot to itinerary: $e');
       return false;
     }
   }
@@ -227,7 +227,7 @@ class ItineraryService {
       
       if (spots.length < 2) return itinerary;
       
-      print('開始計算 ${itinerary.name} 第 $dayNumber 天的路線...');
+      print('Starting route calculation for ${itinerary.name} Day $dayNumber...');
       
       // 計算所有相鄰景點間的路線
       for (int i = 0; i < spots.length - 1; i++) {
@@ -249,7 +249,7 @@ class ItineraryService {
         
         if (routeInfo != null) {
           travelTimeMinutes = routeInfo.duration;
-          print('API 計算結果: ${routeInfo.formattedDuration}');
+          print('API calculation result: ${routeInfo.formattedDuration}');
         } else {
           // 如果API失敗，使用預設計算
           final distance = _calculateDistance(
@@ -258,7 +258,7 @@ class ItineraryService {
           );
           
           travelTimeMinutes = GoogleRoutesService.getDefaultTravelTime(travelMode, distance);
-          print('使用預設計算: ${travelTimeMinutes}分鐘');
+          print('Using default calculation: ${travelTimeMinutes} minutes');
         }
         
         // 更新當前景點的交通資訊
@@ -280,15 +280,15 @@ class ItineraryService {
       // 保存更新後的行程
       await saveItinerary(itinerary);
       
-      print('完成 ${itinerary.name} 第 $dayNumber 天的路線計算和保存');
+      print('Completed route calculation and saved for ${itinerary.name} Day $dayNumber');
       
       return itinerary;
       
     } catch (e) {
-      if (e.toString().contains('此功能需要登入')) {
-        throw Exception('計算路線需要登入');
+      if (e.toString().contains('Login required')) {
+        throw Exception('Login required to calculate route');
       }
-      print('更新路線資訊時發生錯誤: $e');
+      print('Error updating route information: $e');
       return null;
     }
   }

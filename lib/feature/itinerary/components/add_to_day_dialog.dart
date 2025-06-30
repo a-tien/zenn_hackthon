@@ -4,6 +4,7 @@ import '../models/recommended_spot.dart';
 import '../models/spot.dart';
 import '../models/itinerary_day.dart';
 import '../services/itinerary_service.dart';
+import '../../../utils/app_localizations.dart';
 
 class AddToDayDialog extends StatefulWidget {
   final Itinerary itinerary;
@@ -144,6 +145,8 @@ class _AddToDayDialogState extends State<AddToDayDialog>
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       // 調整對話框尺寸
@@ -162,9 +165,9 @@ class _AddToDayDialogState extends State<AddToDayDialog>
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
                 children: [
-                  const Text(
-                    '選擇添加到哪一天',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    localizations?.selectDayToAdd ?? '選擇添加到哪一天',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const Spacer(),
                   IconButton(

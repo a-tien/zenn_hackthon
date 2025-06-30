@@ -21,6 +21,7 @@ import '../../common/widgets/login_required_dialog.dart';
 import 'trip_assistant_page.dart';
 import 'manage_itinerary_members_page.dart';
 import 'add_edit_itinerary_member_page.dart';
+import '../../../utils/app_localizations.dart';
 
 class ItineraryDetailPage extends StatefulWidget {
   final Itinerary itinerary;
@@ -126,24 +127,25 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
   Future<void> _saveItinerary() async {
     try {
       await _itineraryService.saveItinerary(_itinerary);
-    } catch (e) {
-      if (e.toString().contains('需要登入')) {
-        // 顯示登入提示對話框
+    } catch (e) {        if (e.toString().contains('需要登入')) {
+          // 顯示登入提示對話框
+          if (mounted) {
+            final localizations = AppLocalizations.of(context);
+            showDialog(
+              context: context,
+              builder: (context) => LoginRequiredDialog(feature: localizations?.saveItineraryFeature ?? '保存行程'),
+            );
+          }
+          return;
+        }
+        
+        print('保存行程時出錯: $e');
         if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => const LoginRequiredDialog(feature: '保存行程'),
+          final localizations = AppLocalizations.of(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${localizations?.saveFailed ?? '保存失敗: '}$e')),
           );
         }
-        return;
-      }
-      
-      print('保存行程時出錯: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失敗: $e')),
-        );
-      }
       throw e;
     }
   }
@@ -159,24 +161,25 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
       if (mounted) {
         Navigator.pop(context, true); // 返回並通知更新
       }
-    } catch (e) {
-      if (e.toString().contains('需要登入')) {
-        // 顯示登入提示對話框
+    } catch (e) {        if (e.toString().contains('需要登入')) {
+          // 顯示登入提示對話框
+          if (mounted) {
+            final localizations = AppLocalizations.of(context);
+            showDialog(
+              context: context,
+              builder: (context) => LoginRequiredDialog(feature: localizations?.deleteItineraryFeature ?? '刪除行程'),
+            );
+          }
+          return;
+        }
+        
+        print('刪除行程時出錯: $e');
         if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => const LoginRequiredDialog(feature: '刪除行程'),
+          final localizations = AppLocalizations.of(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${localizations?.deleteFailed ?? '刪除失敗: '}$e')),
           );
         }
-        return;
-      }
-      
-      print('刪除行程時出錯: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('刪除失敗: $e')),
-        );
-      }
     }
   }
 
@@ -307,9 +310,10 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
         });
 
         // 顯示成功消息
+        final localizations = AppLocalizations.of(context);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('行程已更新')));
+        ).showSnackBar(SnackBar(content: Text(localizations?.itineraryUpdated ?? '行程已更新')));
       }
     } catch (e) {
       // 錯誤處理
@@ -322,15 +326,17 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
       // 顯示錯誤信息
       if (mounted) {
+        final localizations = AppLocalizations.of(context);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('更新失敗: $e')));
+        ).showSnackBar(SnackBar(content: Text('${localizations?.updateFailed ?? '更新失敗: '}$e')));
       }
     }
   }
 
   // 顯示載入指示器對話框
   void _showLoadingDialog(BuildContext context, String message) {
+    final localizations = AppLocalizations.of(context);
     // 使用 showDialog 而不是直接構建對話框
     showDialog(
       context: context,
@@ -355,7 +361,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                       const CircularProgressIndicator(),
                       const SizedBox(height: 20),
                       Text(
-                        message,
+                        message.isEmpty ? (localizations?.updating ?? '正在更新...') : message,
                         style: const TextStyle(fontSize: 16),
                         textAlign: TextAlign.center,
                       ),
@@ -380,6 +386,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 顯示行程設置選單
   void _showItineraryOptions() {
+    final localizations = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -387,7 +394,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
           children: [
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('刪除行程'),
+              title: Text(localizations?.deleteItinerary ?? '刪除行程'),
               onTap: () {
                 Navigator.pop(context); // 關閉選單
                 _showDeleteConfirmation();
@@ -401,16 +408,17 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 顯示刪除確認對話框
   void _showDeleteConfirmation() {
+    final localizations = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('確認刪除'),
-          content: const Text('確定要刪除此行程嗎？此操作無法復原。'),
+          title: Text(localizations?.confirmDelete ?? '確認刪除'),
+          content: Text(localizations?.confirmDeleteMessage ?? '確定要刪除此行程嗎？此操作無法復原。'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('取消'),
+              child: Text(localizations?.cancel ?? '取消'),
             ),
             TextButton(
               onPressed: () {
@@ -418,7 +426,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                 _deleteItinerary();
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('刪除'),
+              child: Text(localizations?.delete ?? '刪除'),
             ),
           ],
         );
@@ -442,8 +450,9 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
     // 如果用戶取消編輯或對話框被異常關閉，updatedItinerary 將為 null
     if (updatedItinerary != null && mounted) {
+      final localizations = AppLocalizations.of(context);
       // 顯示載入對話框
-      _showLoadingDialog(context, '正在更新行程...');
+      _showLoadingDialog(context, localizations?.updatingItinerary ?? '正在更新行程...');
 
       // 使用 Future.delayed 來確保載入對話框顯示後再執行更新
       Future.delayed(const Duration(milliseconds: 200), () {
@@ -515,6 +524,8 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 構建頁籤欄
   Widget _buildTabBar() {
+    final localizations = AppLocalizations.of(context);
+    
     return Container(
       height: 50,
       color: Colors.white,
@@ -529,9 +540,9 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
               unselectedLabelColor: Colors.grey,
               indicatorColor: Colors.blueAccent,
               tabs: [
-                const Tab(text: '主頁'),
+                Tab(text: localizations?.homepage ?? '主頁'),
                 for (int i = 0; i < _itinerary.days; i++)
-                  Tab(text: '第${i + 1}天'),
+                  Tab(text: localizations?.getDayTab(i + 1) ?? '第${i + 1}天'),
               ],
             ),
           ),
@@ -554,14 +565,16 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 構建主頁內容
   Widget _buildOverviewTab() {
+    final localizations = AppLocalizations.of(context);
+    
     String dateText;
     if (_itinerary.useDateRange) {
       final formatter = (DateTime date) =>
           "${date.year}/${date.month}/${date.day}";
       dateText =
-          "${formatter(_itinerary.startDate)} - ${formatter(_itinerary.endDate)} (${_itinerary.days}天)";
+          "${formatter(_itinerary.startDate)} - ${formatter(_itinerary.endDate)} (${localizations?.getDaysFormat(_itinerary.days) ?? '${_itinerary.days}天'})";
     } else {
-      dateText = "${_itinerary.days}天";
+      dateText = localizations?.getDaysOnly(_itinerary.days) ?? "${_itinerary.days}天";
     }
 
     return SingleChildScrollView(
@@ -704,16 +717,16 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(
+                children: [
+                  const Icon(
                     Icons.bolt, // 閃電圖標
                     color: Colors.white,
                     size: 24,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Text(
-                    '智能行程規劃助理',
-                    style: TextStyle(
+                    localizations?.smartTripAssistant ?? '智能行程規劃助理',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -727,9 +740,9 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
           const SizedBox(height: 24),
 
           // 行程成員區塊
-          const Text(
-            "行程成員",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            localizations?.itineraryMembers ?? "行程成員",
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 16),
@@ -740,9 +753,9 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
           const SizedBox(height: 24),
 
           // 行程天數概覽
-          const Text(
-            "行程概覽",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            localizations?.itineraryOverview ?? "行程概覽",
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 16),
@@ -756,6 +769,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 構建日期概覽卡片
   Widget _buildDayOverviewCard(int dayIndex) {
+    final localizations = AppLocalizations.of(context);
     final day = _itinerary.itineraryDays[dayIndex];
     final spotCount = day.spots.length;
 
@@ -774,7 +788,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.blueAccent,
                   shape: BoxShape.circle,
                 ),
@@ -796,7 +810,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '第${dayIndex + 1}天',
+                      localizations?.getDayTab(dayIndex + 1) ?? '第${dayIndex + 1}天',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -804,7 +818,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$spotCount 個景點 · ${day.transportation}',
+                      '${localizations?.getSpotsCount(spotCount) ?? '$spotCount 個景點'} · ${day.transportation}',
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
@@ -966,12 +980,14 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 構建日期頭部欄
   Widget _buildDayHeader(int dayIndex, ItineraryDay day) {
+    final localizations = AppLocalizations.of(context);
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Text(
-            '第${dayIndex + 1}天',
+            localizations?.getDayTab(dayIndex + 1) ?? '第${dayIndex + 1}天',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const Spacer(),
@@ -1002,16 +1018,17 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
           // 一鍵安排按鈕
           ElevatedButton.icon(
             icon: const Icon(Icons.shuffle, size: 18),
-            label: const Text('一鍵安排'),
+            label: Text(localizations?.oneClickArrange ?? '一鍵安排'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.amber,
               foregroundColor: Colors.white,
             ),
             onPressed: () {
               // 暫時顯示未實現提示
+              final localizations = AppLocalizations.of(context);
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('此功能尚未實現')));
+              ).showSnackBar(SnackBar(content: Text(localizations?.featureNotImplemented ?? '此功能尚未實現')));
             },
           ),
         ],
@@ -1021,22 +1038,24 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 構建空景點列表
   Widget _buildEmptySpotsList(int dayIndex) {
+    final localizations = AppLocalizations.of(context);
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.location_off, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
-          const Text(
-            "尚無景點",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            localizations?.noSpots ?? "尚無景點",
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text("點擊下方按鈕添加第一個景點", style: TextStyle(color: Colors.grey[600])),
+          Text(localizations?.clickToAddFirstSpot ?? "點擊下方按鈕添加第一個景點", style: TextStyle(color: Colors.grey[600])),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             icon: const Icon(Icons.add),
-            label: const Text('添加景點'),
+            label: Text(localizations?.addSpot ?? '添加景點'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blueAccent,
               foregroundColor: Colors.white,
@@ -1053,6 +1072,8 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 構建景點列表
   Widget _buildSpotsList(int dayIndex, ItineraryDay day) {
+    final localizations = AppLocalizations.of(context);
+    
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
       itemCount: day.spots.length + 1, // +1 for the add button at the end
@@ -1064,7 +1085,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
             child: Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('添加景點'),
+                label: Text(localizations?.addSpot ?? '添加景點'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
                   foregroundColor: Colors.white,
@@ -1092,7 +1113,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                 // 導航功能（暫未實現）
                 ScaffoldMessenger.of(
                   context,
-                ).showSnackBar(const SnackBar(content: Text('導航功能尚未實現')));
+                ).showSnackBar(SnackBar(content: Text(localizations?.navigationNotImplemented ?? '導航功能尚未實現')));
               },
               onEditStayTime: () => _showEditStayTimeDialog(spot), // 添加編輯停留時間功能
             ),// 如果不是最後一個景點，顯示交通段落
@@ -1253,6 +1274,8 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 顯示行程成員區塊
   Widget _buildMembersSection() {
+    final localizations = AppLocalizations.of(context);
+    
     if (_itinerary.members.isEmpty) {
       // 無成員時顯示空狀態
       return Card(
@@ -1266,9 +1289,9 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
               children: [
                 const Icon(Icons.person_add, size: 48, color: Colors.grey),
                 const SizedBox(height: 16),
-                const Text(
-                  '尚未設定行程成員',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                Text(
+                  localizations?.noMembersSet ?? '尚未設定行程成員',
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
                 ElevatedButton(
@@ -1277,7 +1300,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('設定行程成員'),
+                  child: Text(localizations?.setItineraryMembers ?? '設定行程成員'),
                 ),
               ],
             ),
@@ -1304,7 +1327,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                 ),
                 TextButton.icon(
                   icon: const Icon(Icons.edit, size: 16),
-                  label: const Text('編輯'),
+                  label: Text(localizations?.edit ?? '編輯'),
                   onPressed: _manageTravelMembers,
                 ),
               ],
@@ -1345,6 +1368,8 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 顯示成員詳情
   void _showMemberDetails(ItineraryMember member) {
+    final localizations = AppLocalizations.of(context);
+    
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -1377,14 +1402,14 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
               children: [
                 const Icon(Icons.cake, color: Colors.grey, size: 18),
                 const SizedBox(width: 8),
-                Text('年齡層: ${member.ageGroup}'),
+                Text('${localizations?.ageGroup ?? '年齡層: '}${member.ageGroup}'),
               ],
             ),
             const SizedBox(height: 12),
             
             // 興趣
             if (member.interests.isNotEmpty) ...[
-              const Text('興趣:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(localizations?.interests ?? '興趣:', style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               Wrap(
                 spacing: 6,
@@ -1400,7 +1425,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
             
             // 特殊需求
             if (member.specialNeeds.isNotEmpty) ...[
-              const Text('特殊需求:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(localizations?.specialNeeds ?? '特殊需求:', style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               Wrap(
                 spacing: 6,
@@ -1426,7 +1451,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('編輯成員'),
+                child: Text(localizations?.editMember ?? '編輯成員'),
               ),
             ),
           ],
@@ -1520,6 +1545,8 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 處理景點卡片點擊，跳轉到景點詳細頁面
   Future<void> _handleSpotTap(Spot spot) async {
+    final localizations = AppLocalizations.of(context);
+    
     try {      // 根據 placeId 獲取詳細的景點資訊
       final favoriteSpot = await FavoriteService.getFullSpotDetails(spot.id);
       
@@ -1534,7 +1561,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
         // 如果無法獲取詳細資訊，顯示錯誤訊息
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('無法載入景點詳細資訊')),
+            SnackBar(content: Text(localizations?.cannotLoadSpotDetails ?? '無法載入景點詳細資訊')),
           );
         }
       }
@@ -1542,7 +1569,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
       print('載入景點詳細資訊時發生錯誤: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('載入景點資訊時發生錯誤')),
+          SnackBar(content: Text(localizations?.errorLoadingSpotInfo ?? '載入景點資訊時發生錯誤')),
         );
       }
     }
@@ -1766,21 +1793,22 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
 
   // 顯示天數資訊對話框
   void _showDayInfoDialog(int dayIndex) {
+    final localizations = AppLocalizations.of(context);
     final day = _itinerary.itineraryDays[dayIndex];
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('第${dayIndex + 1}天資訊'),
+        title: Text(localizations?.getDayInfo(dayIndex + 1) ?? '第${dayIndex + 1}天資訊'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('景點數量: ${day.spots.length}'),
+            Text('${localizations?.spotCount ?? '景點數量: '}${day.spots.length}'),
             const SizedBox(height: 8),
-            Text('交通方式: ${day.transportation}'),
+            Text('${localizations?.transportationMethod ?? '交通方式: '}${day.transportation}'),
             if (day.spots.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text('景點列表:'),
+              Text(localizations?.spotList ?? '景點列表:'),
               ...day.spots.asMap().entries.map((entry) {
                 final index = entry.key;
                 final spot = entry.value;
@@ -1795,7 +1823,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('關閉'),
+            child: Text(localizations?.close ?? '關閉'),
           ),
         ],
       ),

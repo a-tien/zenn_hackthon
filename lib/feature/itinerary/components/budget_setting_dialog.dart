@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/app_localizations.dart';
 
 class BudgetSettingDialog extends StatefulWidget {
   final bool hasBudget;
@@ -34,6 +35,8 @@ class _BudgetSettingDialogState extends State<BudgetSettingDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -44,9 +47,9 @@ class _BudgetSettingDialogState extends State<BudgetSettingDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '設定行程預算',
-              style: TextStyle(
+            Text(
+              localizations?.setBudgetTitle ?? '設定行程預算',
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -65,7 +68,7 @@ class _BudgetSettingDialogState extends State<BudgetSettingDialog> {
                     });
                   },
                 ),
-                const Text('設定每人預算'),
+                Text(localizations?.setBudgetPerPerson ?? '設定每人預算'),
                 
                 const Spacer(),
                 
@@ -77,7 +80,7 @@ class _BudgetSettingDialogState extends State<BudgetSettingDialog> {
                     widget.onUpdate(false, 0, 0);
                     Navigator.pop(context);
                   },
-                  child: const Text('不設定'),
+                  child: Text(localizations?.noSetting ?? '不設定'),
                 ),
               ],
             ),
@@ -89,14 +92,14 @@ class _BudgetSettingDialogState extends State<BudgetSettingDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '最低: ${_budgetRange.start.toInt()} 元',
+                  '${localizations?.minimum ?? '最低'}: ${_budgetRange.start.toInt()} ${localizations?.currency ?? '元'}',
                   style: TextStyle(
                     fontSize: 16,
                     color: _hasBudget ? Colors.black : Colors.grey,
                   ),
                 ),
                 Text(
-                  '最高: ${_budgetRange.end.toInt()} 元',
+                  '${localizations?.maximum ?? '最高'}: ${_budgetRange.end.toInt()} ${localizations?.currency ?? '元'}',
                   style: TextStyle(
                     fontSize: 16,
                     color: _hasBudget ? Colors.black : Colors.grey,
@@ -145,7 +148,7 @@ class _BudgetSettingDialogState extends State<BudgetSettingDialog> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text('確認'),
+                child: Text(localizations?.confirm ?? '確認'),
               ),
             ),
           ],

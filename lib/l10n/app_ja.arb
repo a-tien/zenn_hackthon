@@ -1,0 +1,12 @@
+{
+  "@@locale": "ja",
+  "appTitle": "旅行推薦",
+  "homeTab": "ホーム",
+  "discoverTab": "発見",
+  "itineraryTab": "旅程",
+  "profileTab": "プロフィール",
+  "searchHint": "目的地を検索...",
+  "popularDestinations": "人気の目的地",
+  "recentlyViewed": "最近見た",
+  "nearbyAttractions": "近くの観光地"
+}
