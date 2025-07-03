@@ -29,7 +29,6 @@ class AIPlanningResultPage extends StatefulWidget {
 class _AIPlanningResultPageState extends State<AIPlanningResultPage> with TickerProviderStateMixin {
   late TabController _tabController;
   late Map<String, dynamic> _resultPreItinerary = widget.resultPreItinerary;
-  final ItineraryService _itineraryService = ItineraryService();
   late Itinerary _resultItinerary;
 
   @override
