@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'register_page.dart';
+import '../../../utils/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -57,9 +58,10 @@ class _LoginPageState extends State<LoginPage> {
       if (result.success) {
         // 登入成功，返回上一個頁面
         if (mounted) {
+          final localizations = AppLocalizations.of(context);
           // 顯示成功訊息
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('登入成功')),
+            SnackBar(content: Text(localizations?.loginSuccess ?? '登入成功')),
           );
           
           // 延遲一下再返回，讓使用者看到成功提示
@@ -74,7 +76,8 @@ class _LoginPageState extends State<LoginPage> {
         // 登入失敗
         if (mounted) {
           setState(() {
-            _errorMessage = result.errorMessage ?? '帳號或密碼錯誤';
+            final localizations = AppLocalizations.of(context);
+            _errorMessage = result.errorMessage ?? (localizations?.accountOrPasswordError ?? '帳號或密碼錯誤');
           });
         }
       }
@@ -84,7 +87,8 @@ class _LoginPageState extends State<LoginPage> {
       
       if (mounted) {
         setState(() {
-          _errorMessage = '登入時發生錯誤，請稍後再試';
+          final localizations = AppLocalizations.of(context);
+          _errorMessage = localizations?.loginErrorMessage ?? '登入時發生錯誤，請稍後再試';
           _isLoading = false;
         });
       }
@@ -96,9 +100,10 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text.trim();
     
     if (email.isEmpty) {
+      final localizations = AppLocalizations.of(context);
       // 如果郵件欄位為空，顯示錯誤提示
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請先輸入您的電子郵件')),
+        SnackBar(content: Text(localizations?.pleaseEnterEmailFirst ?? '請先輸入您的電子郵件')),
       );
       return;
     }
@@ -118,14 +123,16 @@ class _LoginPageState extends State<LoginPage> {
         });
         
         if (success) {
+          final localizations = AppLocalizations.of(context);
           // 顯示成功訊息
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('密碼重設郵件已發送到 $email')),
+            SnackBar(content: Text(localizations?.passwordResetEmailSent(email) ?? '密碼重設郵件已發送到 $email')),
           );
         } else {
+          final localizations = AppLocalizations.of(context);
           // 顯示錯誤訊息
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('發送密碼重設郵件失敗，請確認郵箱是否正確')),
+            SnackBar(content: Text(localizations?.passwordResetFailedMessage ?? '發送密碼重設郵件失敗，請確認郵箱是否正確')),
           );
         }
       }
@@ -134,8 +141,9 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           _isLoading = false;
         });
+        final localizations = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('發送密碼重設郵件時發生錯誤')),
+          SnackBar(content: Text(localizations?.passwordResetErrorMessage ?? '發送密碼重設郵件時發生錯誤')),
         );
       }
     }
@@ -143,9 +151,10 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('登入'),
+        title: Text(localizations?.loginPageTitle ?? '登入'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -159,17 +168,17 @@ class _LoginPageState extends State<LoginPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 標題
-                const Text(
-                  '歡迎回來',
-                  style: TextStyle(
+                Text(
+                  localizations?.welcomeBack ?? '歡迎回來',
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  '登入以繼續使用所有功能',
-                  style: TextStyle(
+                Text(
+                  localizations?.loginToContinue ?? '登入以繼續使用所有功能',
+                  style: const TextStyle(
                     fontSize: 16,
                     color: Colors.grey,
                   ),
@@ -194,15 +203,15 @@ class _LoginPageState extends State<LoginPage> {
                 // 電子郵件欄位
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: '電子郵件',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
+                  decoration: InputDecoration(
+                    labelText: localizations?.email ?? '電子郵件',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.email),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return '請輸入電子郵件';
+                      return localizations?.pleaseEnterEmail ?? '請輸入電子郵件';
                     }
                     return null;
                   },
@@ -212,18 +221,19 @@ class _LoginPageState extends State<LoginPage> {
                 // 密碼欄位
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: '密碼',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
+                  decoration: InputDecoration(
+                    labelText: localizations?.password ?? '密碼',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
                   ),
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return '請輸入密碼';
+                      return localizations?.pleaseEnterPassword ?? '請輸入密碼';
                     }
                     return null;
-                  },                ),
+                  },
+                ),
                 const SizedBox(height: 16),
 
                 // 忘記密碼按鈕
@@ -234,7 +244,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.blue,
                     ),
-                    child: const Text('忘記密碼？'),
+                    child: Text(localizations?.forgotPassword ?? '忘記密碼？'),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -259,14 +269,15 @@ class _LoginPageState extends State<LoginPage> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          '登入',
-                          style: TextStyle(fontSize: 16),
+                      : Text(
+                          localizations?.loginButtonText ?? '登入',
+                          style: const TextStyle(fontSize: 16),
                         ),
                 ),
                 const SizedBox(height: 16),
 
-                // 忘記密碼按鈕
+                // 忘記密碼按鈕 (重複的，應該移除一個)
+                /*
                 TextButton(
                   onPressed: _isLoading ? null : _handleForgotPassword,
                   child: _isLoading
@@ -278,20 +289,21 @@ class _LoginPageState extends State<LoginPage> {
                             color: Colors.blue,
                           ),
                         )
-                      : const Text(
-                          '忘記密碼？',
-                          style: TextStyle(
+                      : Text(
+                          localizations?.forgotPassword ?? '忘記密碼？',
+                          style: const TextStyle(
                             color: Colors.blue,
                             fontSize: 16,
                           ),
                         ),
                 ),
+                */
 
                 // 註冊連結
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('還沒有帳號？'),
+                    Text(localizations?.dontHaveAccount ?? '還沒有帳號？'),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -301,7 +313,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         );
                       },
-                      child: const Text('立即註冊'),
+                      child: Text(localizations?.registerNow ?? '立即註冊'),
                     ),
                   ],
                 ),
@@ -315,7 +327,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.grey,
                   ),
-                  child: const Text('以遊客身份繼續'),
+                  child: Text(localizations?.continueAsGuest ?? '以遊客身份繼續'),
                 ),
               ],
             ),

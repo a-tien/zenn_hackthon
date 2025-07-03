@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../models/travel_companion.dart';
 import '../services/companion_service.dart';
+import '../../../utils/app_localizations.dart';
 
 class AddEditCompanionPage extends StatefulWidget {
   final TravelCompanion? companion;
@@ -92,7 +93,7 @@ class _AddEditCompanionPageState extends State<AddEditCompanionPage> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存旅伴失敗：$e')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.getSaveCompanionFailed(e.toString()) ?? '儲存旅伴失敗：$e')),
         );
       }
     }

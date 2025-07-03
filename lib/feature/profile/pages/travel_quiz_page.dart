@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/quiz_question.dart';
 import '../services/quiz_service.dart';
 import 'quiz_result_page.dart';
+import '../../../utils/app_localizations.dart';
 
 class TravelQuizPage extends StatefulWidget {
   const TravelQuizPage({super.key});
@@ -68,7 +69,7 @@ class _TravelQuizPageState extends State<TravelQuizPage> {
           } else {
             // 如果已達到最大選擇數，顯示提示
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('最多選擇$maxSelections項')),
+              SnackBar(content: Text(AppLocalizations.of(context)?.getMaxSelectionsReached(maxSelections) ?? '最多選擇${maxSelections}項')),
             );
           }
         }

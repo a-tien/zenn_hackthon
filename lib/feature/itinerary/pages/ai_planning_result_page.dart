@@ -5,10 +5,8 @@ import '../models/spot.dart';
 import '../models/itinerary_day.dart';
 import '../components/spot_card.dart';
 import '../components/transportation_segment.dart';
-import '../services/itinerary_service.dart';
-import '../../common/widgets/login_required_dialog.dart';
-import '../../common/services/firestore_service.dart';
 import 'update_firestore.dart';
+import '../../../utils/app_localizations.dart';
 
 class AIPlanningResultPage extends StatefulWidget {
   final Itinerary originalItinerary;
@@ -31,7 +29,6 @@ class AIPlanningResultPage extends StatefulWidget {
 class _AIPlanningResultPageState extends State<AIPlanningResultPage> with TickerProviderStateMixin {
   late TabController _tabController;
   late Itinerary _resultItinerary;
-  final ItineraryService _itineraryService = ItineraryService();
 
   @override
   void initState() {
@@ -142,35 +139,6 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
       ),
     ];
   }
-  // 保存並更新行程
-  Future<void> _saveAndUpdateItinerary() async {
-    if (!FirestoreService.isUserLoggedIn()) {      showDialog(
-        context: context,
-        builder: (context) => const LoginRequiredDialog(feature: '更新行程'),
-      );
-      return;
-    }
-
-    try {      // 使用 ItineraryService 更新行程
-      await _itineraryService.saveItinerary(_resultItinerary);
-
-      // 顯示成功訊息
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('行程已成功更新')),
-        );
-        
-        // 返回行程詳情頁        Navigator.popUntil(context, (route) => route.isFirst);
-      }
-    } catch (e) {
-      print('Error updating itinerary: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('更新行程失敗: $e')),
-        );
-      }
-    }
-  }
 
   // Firestore 更新行程
   Future<void> _updateItineraryToFirestore() async {
@@ -180,7 +148,7 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
 
     if (userId == null || itineraryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('使用者ID或行程ID為空，無法更新Firestore')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.userIdOrItineraryIdEmpty)),
       );
       return;
     }
@@ -189,13 +157,13 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
       await updateItineraryPartial(userId, itineraryId, jsonResult);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('成功寫入 Firestore')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.firestoreWriteSuccess)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Firestore 更新失敗: $e')),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.firestoreUpdateFailed}: $e')),
         );
       }
     }
@@ -205,7 +173,7 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('智能規劃結果'),
+        title: Text(AppLocalizations.of(context)!.aiPlanningResult),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -256,11 +224,11 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
                   child: OutlinedButton.icon(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('此功能即將推出')),
+                        SnackBar(content: Text(AppLocalizations.of(context)!.comingSoon)),
                       );
                     },
                     icon: const Icon(Icons.chat),
-                    label: const Text('與智能助理聊聊'),
+                    label: Text(AppLocalizations.of(context)!.chatWithAiAssistant),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -276,7 +244,7 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
                       Navigator.pop(context);
                     },
                     icon: const Icon(Icons.delete),
-                    label: const Text('捨棄此行程建議'),
+                    label: Text(AppLocalizations.of(context)!.discardItinerarySuggestion),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       foregroundColor: Colors.red,
@@ -291,7 +259,7 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
                   child: ElevatedButton.icon(
                     onPressed: _updateItineraryToFirestore,
                     icon: const Icon(Icons.check),
-                    label: const Text('更新至我的行程'),
+                    label: Text(AppLocalizations.of(context)!.updateToMyItinerary),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
@@ -588,7 +556,7 @@ class _AIPlanningResultPageState extends State<AIPlanningResultPage> with Ticker
               spot: spot,
               onNavigate: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('導航功能尚未實現')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.navigationNotImplementedYet)),
                 );
               },
             ),

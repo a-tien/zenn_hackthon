@@ -558,8 +558,9 @@ class _HomeDetailPageState extends State<HomeDetailPage>
                 SpotCard(
                   spot: spot,
                   onNavigate: () {
+                    final localizations = AppLocalizations.of(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('導航功能尚未實現')),
+                      SnackBar(content: Text(localizations?.navigationNotImplementedYet ?? '導航功能尚未實現')),
                     );
                   },
                 ),

@@ -27,11 +27,11 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
   int _days = 1;
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 1));
-  String _transportation = '自行安排';
-  String _travelType = '家庭旅遊';
+  String _transportation = '';
+  String _travelType = '';
 
-  final List<String> _transportationOptions = ['自行安排', '開車', '大眾運輸', '步行', '機車'];
-  final List<String> _travelTypeOptions = ['家庭旅遊', '好友出遊', '情侶出遊', '長輩出遊', '無障礙出遊', '個人獨旅'];
+  List<String> _transportationOptions = [];
+  List<String> _travelTypeOptions = [];
   
   // 新增日期範圍選擇狀態
   DateTimeRange? _dateRange;
@@ -43,6 +43,24 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
       start: _startDate,
       end: _endDate,
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final localizations = AppLocalizations.of(context);
+    if (localizations != null) {
+      _transportationOptions = localizations.transportationOptions;
+      _travelTypeOptions = localizations.travelTypeOptions;
+      
+      // 設定預設值
+      if (_transportation.isEmpty) {
+        _transportation = _transportationOptions.isNotEmpty ? _transportationOptions[0] : '';
+      }
+      if (_travelType.isEmpty) {
+        _travelType = _travelTypeOptions.isNotEmpty ? _travelTypeOptions[0] : '';
+      }
+    }
   }
   @override
   void dispose() {
@@ -108,7 +126,7 @@ class _AddItineraryPageState extends State<AddItineraryPage> {
         if (mounted) {
           final localizations = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${localizations?.createFailed ?? '建立失敗: '}$e')),
+            SnackBar(content: Text(localizations?.getCreateFailed(e.toString()) ?? '建立失敗: $e')),
           );
         }
       }

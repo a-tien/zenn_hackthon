@@ -1,0 +1,12 @@
+{
+  "@@locale": "zh_TW",
+  "appTitle": "旅遊推薦",
+  "homeTab": "首頁",
+  "discoverTab": "探索",
+  "itineraryTab": "行程",
+  "profileTab": "個人檔案",
+  "searchHint": "搜尋目的地...",
+  "popularDestinations": "熱門目的地",
+  "recentlyViewed": "最近瀏覽",
+  "nearbyAttractions": "附近景點"
+}

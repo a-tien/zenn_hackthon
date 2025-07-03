@@ -3,6 +3,7 @@ import '../../itinerary/models/itinerary.dart';
 import '../../itinerary/pages/add_itinerary_page.dart';
 import '../../itinerary/services/itinerary_service.dart';
 import '../models/favorite_spot.dart';
+import '../../../utils/app_localizations.dart';
 
 class AddToItineraryDialog extends StatefulWidget {
   final FavoriteSpot spot;
@@ -110,8 +111,9 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
         if (mounted) Navigator.pop(context);
         
         if (mounted) {
+          final localizations = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('行程 ID 不存在，無法加入景點')),
+            SnackBar(content: Text(localizations?.itineraryIdNotExistError ?? '行程 ID 不存在，無法加入景點')),
           );
         }
         return;
@@ -133,10 +135,12 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
       
       // 顯示結果
       if (mounted) {
+        final localizations = AppLocalizations.of(context);
         if (updatedItinerary != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
+                localizations?.addedToItinerarySuccessMessage(widget.spot.name, itinerary.name, dayIndex + 1) ?? 
                 '已成功將 ${widget.spot.name} 加入到 ${itinerary.name} 的第 ${dayIndex + 1} 天',
               ),
               backgroundColor: Colors.green,
@@ -146,7 +150,7 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '加入行程失敗，景點可能已存在或發生其他錯誤',
+                localizations?.addToItineraryFailedMessage ?? '加入行程失敗，景點可能已存在或發生其他錯誤',
               ),
               backgroundColor: Colors.red,
             ),
@@ -163,9 +167,10 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
       if (mounted) Navigator.pop(context, false);
       
       if (mounted) {
+        final localizations = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('加入行程時發生錯誤: $e'),
+            content: Text(localizations?.addToItineraryErrorMessage(e.toString()) ?? '加入行程時發生錯誤: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -185,8 +190,9 @@ class _AddToItineraryDialogState extends State<AddToItineraryDialog> {
     
     // 返回後顯示提示
     if (mounted) {
+      final localizations = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請在新行程創建完成後再次點擊加入行程')),
+        SnackBar(content: Text(localizations?.createNewItineraryFirstMessage ?? '請在新行程創建完成後再次點擊加入行程')),
       );
     }
   }

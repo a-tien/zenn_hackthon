@@ -33,11 +33,13 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
     _newCollectionController.dispose();
     super.dispose();
   }
-  Future<void> _loadCollections() async {    if (!FirestoreService.isUserLoggedIn()) {
+  Future<void> _loadCollections() async {
+    if (!FirestoreService.isUserLoggedIn()) {
       if (mounted) {
+        final localizations = AppLocalizations.of(context);
         showDialog(
           context: context,
-          builder: (context) => LoginRequiredDialog(feature: AppLocalizations.of(context)?.favoriteFeature ?? '收藏功能'),
+          builder: (context) => LoginRequiredDialog(feature: localizations?.favoriteFeature ?? '收藏功能'),
         );
       }
       return;
@@ -47,10 +49,12 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
       final loadedCollections = await FavoriteService.getAllCollections();
       
       // 如果沒有收藏集，創建默認的"口袋清單"
-      if (loadedCollections.isEmpty) {        final defaultCollection = FavoriteCollection(
+      if (loadedCollections.isEmpty) {
+        final localizations = AppLocalizations.of(context);
+        final defaultCollection = FavoriteCollection(
           id: '', // 將由 Firestore 自動生成
-          name: '口袋清單',
-          description: '我想去的地方',
+          name: localizations?.pocketList ?? '口袋清單',
+          description: localizations?.defaultCollectionDescription ?? '我想去的地方',
           spotIds: [],
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
@@ -76,16 +80,19 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
       });
       
       if (mounted) {
+        final localizations = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入收藏集失敗: $e')),
+          SnackBar(content: Text(localizations?.loadCollectionsFailedMessage(e.toString()) ?? '載入收藏集失敗: $e')),
         );
       }
     }
   }
-  Future<void> _addToCollection() async {    if (!FirestoreService.isUserLoggedIn()) {
+  Future<void> _addToCollection() async {
+    if (!FirestoreService.isUserLoggedIn()) {
+      final localizations = AppLocalizations.of(context);
       showDialog(
         context: context,
-        builder: (context) => const LoginRequiredDialog(feature: '收藏功能'),
+        builder: (context) => LoginRequiredDialog(feature: localizations?.favoriteFeature ?? '收藏功能'),
       );
       return;
     }
@@ -93,14 +100,17 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
     if (selectedCollectionId == null && !isCreatingNew) return;
 
     try {
+      final localizations = AppLocalizations.of(context);
       // 如果是創建新收藏集
       if (isCreatingNew) {
         if (_newCollectionController.text.trim().isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('請輸入收藏集名稱')),
+            SnackBar(content: Text(localizations?.pleaseEnterCollectionNameSnackbar ?? '請輸入收藏集名稱')),
           );
           return;
-        }        // 創建新收藏集
+        }
+
+        // 創建新收藏集
         final newCollection = FavoriteCollection(
           id: '', // 將由 Firestore 自動生成
           name: _newCollectionController.text.trim(),
@@ -123,7 +133,7 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
         if (collection.spotIds.contains(widget.spot.id)) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('此景點已在該收藏集中')),
+            SnackBar(content: Text(localizations?.spotAlreadyInCollection ?? '此景點已在該收藏集中')),
           );
           return;
         }
@@ -136,19 +146,21 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
       await FavoriteService.addSpotToFavorites(widget.spot);
 
       Navigator.pop(context);
+      final localizations2 = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(isCreatingNew 
-            ? '已加入新收藏集「${_newCollectionController.text.trim()}」'
-            : '已加入收藏集「${collections.firstWhere((c) => c.id == selectedCollectionId).name}」'
+            ? (localizations2?.addedToNewCollectionMessage(_newCollectionController.text.trim()) ?? '已加入新收藏集「${_newCollectionController.text.trim()}」')
+            : (localizations2?.addedToCollectionMessage(collections.firstWhere((c) => c.id == selectedCollectionId).name) ?? '已加入收藏集「${collections.firstWhere((c) => c.id == selectedCollectionId).name}」')
           ),
         ),
       );
     } catch (e) {
       print('Error adding to collection: $e');
       if (mounted) {
+        final localizations = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('加入收藏集失敗: $e')),
+          SnackBar(content: Text(localizations?.addToCollectionFailedMessage(e.toString()) ?? '加入收藏集失敗: $e')),
         );
       }
     }
@@ -156,8 +168,9 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('加入收藏'),
+      title: Text(localizations?.addToFavoriteTitle ?? '加入收藏'),
       content: isLoading
           ? const SizedBox(
               height: 100,
@@ -168,14 +181,14 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '將「${widget.spot.name}」加入到：',
+                  localizations?.addSpotToCollectionMessage(widget.spot.name) ?? '將「${widget.spot.name}」加入到：',
                   style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 16),
                 
                 if (!isCreatingNew) ...[
                   // 現有收藏集選擇
-                  const Text('選擇收藏集：'),
+                  Text(localizations?.selectCollection ?? '選擇收藏集：'),
                   const SizedBox(height: 8),
                   ...collections.map((collection) {
                     return RadioListTile<String>(
@@ -201,17 +214,17 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
                       });
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('創建新收藏集'),
+                    label: Text(localizations?.createNewCollectionButton ?? '創建新收藏集'),
                   ),
                 ] else ...[
                   // 創建新收藏集
-                  const Text('新收藏集名稱：'),
+                  Text(localizations?.newCollectionName ?? '新收藏集名稱：'),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _newCollectionController,
-                    decoration: const InputDecoration(
-                      hintText: '例如：北海道景點',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: localizations?.collectionNamePlaceholder ?? '例如：北海道景點',
+                      border: const OutlineInputBorder(),
                     ),
                     autofocus: true,
                   ),
@@ -224,7 +237,7 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
                       });
                     },
                     icon: const Icon(Icons.arrow_back),
-                    label: const Text('返回選擇現有收藏集'),
+                    label: Text(localizations?.backToExistingCollections ?? '返回選擇現有收藏集'),
                   ),
                 ],
               ],
@@ -232,7 +245,7 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('取消'),
+          child: Text(localizations?.cancel ?? '取消'),
         ),
         ElevatedButton(
           onPressed: _addToCollection,
@@ -240,7 +253,7 @@ class _AddToCollectionDialogState extends State<AddToCollectionDialog> {
             backgroundColor: Colors.blueAccent,
             foregroundColor: Colors.white,
           ),
-          child: const Text('加入'),
+          child: Text(localizations?.addButton ?? '加入'),
         ),
       ],
     );

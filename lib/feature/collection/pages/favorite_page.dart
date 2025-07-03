@@ -52,7 +52,7 @@ class _FavoritePageState extends State<FavoritePage> {
           showDialog(
             context: context,
             builder: (context) => LoginRequiredDialog(
-              feature: '查看收藏',
+              feature: AppLocalizations.of(context)?.viewFavorites ?? '查看收藏',
               onLoginPressed: () {
                 Navigator.of(context).pop();
                 // 重新載入資料
@@ -156,7 +156,7 @@ class _FavoritePageState extends State<FavoritePage> {
           if (mounted) {
             showDialog(
               context: context,
-              builder: (context) => const LoginRequiredDialog(feature: '創建收藏集'),
+              builder: (context) => LoginRequiredDialog(feature: AppLocalizations.of(context)?.createCollection ?? '創建收藏集'),
             );
           }
           return;

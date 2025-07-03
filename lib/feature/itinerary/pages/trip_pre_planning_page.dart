@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../models/itinerary.dart';
 import '../models/itinerary_member.dart';
 import '../components/edit_itinerary_dialog.dart';
 import '../components/budget_setting_dialog.dart';
 import '../components/additional_requirements_dialog.dart';
 import '../services/api_service.dart'; // 新增的API服務
-import 'update_firestore.dart';
 import 'manage_itinerary_members_page.dart';
 import 'ai_planning_result_page.dart';
+import '../../../utils/app_localizations.dart';
 
 class TripPrePlanningPage extends StatefulWidget {
   final Itinerary itinerary;
@@ -189,7 +188,7 @@ class _TripPrePlanningPageState extends State<TripPrePlanningPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('行程規劃前準備'),
+        title: Text(AppLocalizations.of(context)!.tripPrePlanning),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,

@@ -3,6 +3,7 @@ import '../models/travel_companion.dart';
 import '../services/companion_service.dart';
 import '../../common/widgets/login_required_dialog.dart';
 import 'add_edit_companion_page.dart';
+import '../../../utils/app_localizations.dart';
 
 class CompanionsPage extends StatefulWidget {
   const CompanionsPage({super.key});
@@ -57,7 +58,7 @@ class _CompanionsPageState extends State<CompanionsPage> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('加載旅伴數據失敗：$e')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.getLoadCompanionDataFailed(e.toString()) ?? '載入旅伴資料失敗：$e')),
         );
       }
     }
@@ -116,7 +117,7 @@ class _CompanionsPageState extends State<CompanionsPage> {
         await CompanionService.deleteCompanion(companion.id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('旅伴已刪除')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.companionDeleted ?? '旅伴已刪除')),
           );
           _loadCompanions();
         }      } catch (e) {
@@ -133,7 +134,7 @@ class _CompanionsPageState extends State<CompanionsPage> {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('刪除旅伴失敗：$e')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.getDeleteCompanionFailed(e.toString()) ?? '刪除旅伴失敗：$e')),
           );
         }
       }

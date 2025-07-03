@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/itinerary.dart';
 import 'recommend_spots_page.dart';
 import 'trip_pre_planning_page.dart';
+import '../../../utils/app_localizations.dart';
 
 class TripAssistantPage extends StatelessWidget {
   final Itinerary itinerary;
@@ -15,7 +16,7 @@ class TripAssistantPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('行程規劃助理'),
+        title: Text(AppLocalizations.of(context)!.tripAssistant),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -31,8 +32,8 @@ class TripAssistantPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 歡迎標題
-              const Text(
-                '歡迎使用智能行程規劃助理',
+              Text(
+                AppLocalizations.of(context)!.welcomeToTripAssistant,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -44,7 +45,7 @@ class TripAssistantPage extends StatelessWidget {
               
               // 歡迎文字
               Text(
-                '我們將根據您的行程偏好和目的地資訊，提供個性化的旅行規劃服務。',
+                AppLocalizations.of(context)!.tripAssistantDescription,
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[600],
@@ -57,8 +58,8 @@ class TripAssistantPage extends StatelessWidget {
               // 推薦景點按鈕
               _buildOptionCard(
                 context,
-                title: '推薦景點',
-                description: '基於您的喜好，為您推薦附近值得一遊的景點和美食。',
+                title: AppLocalizations.of(context)!.recommendSpots,
+                description: AppLocalizations.of(context)!.recommendSpotsDescription,
                 icon: Icons.place,
                 color: Colors.blue,
                 onTap: () {
@@ -79,8 +80,8 @@ class TripAssistantPage extends StatelessWidget {
               // 完整規劃按鈕
               _buildOptionCard(
                 context,
-                title: '完整規劃',
-                description: '讓我們為您設計整個行程，包括景點安排、交通方式和時間規劃。',
+                title: AppLocalizations.of(context)!.completePlanning,
+                description: AppLocalizations.of(context)!.completePlanningDescription,
                 icon: Icons.schedule,
                 color: Colors.amber,
                 onTap: () {
@@ -98,7 +99,7 @@ class TripAssistantPage extends StatelessWidget {
                   foregroundColor: Colors.black87,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('關閉'),
+                child: Text(AppLocalizations.of(context)!.close),
               ),
             ],
           ),
@@ -129,15 +130,15 @@ class TripAssistantPage extends StatelessWidget {
       barrierDismissible: true,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('請選擇規劃方式'),
+          title: Text(AppLocalizations.of(context)!.choosePlanningMethod),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // 覆蓋現有行程選項
               ListTile(
                 leading: const Icon(Icons.refresh, color: Colors.blue),
-                title: const Text('覆蓋現有行程'),
-                subtitle: const Text('刪除所有已選的景點，重新規劃整個行程'),
+                title: Text(AppLocalizations.of(context)!.overwriteExistingItinerary),
+                subtitle: Text(AppLocalizations.of(context)!.overwriteDescription),
                 onTap: () {
                   print('Dialog: selected overwrite'); // 添加日誌
                   Navigator.pop(dialogContext);
@@ -147,8 +148,8 @@ class TripAssistantPage extends StatelessWidget {
               // 保留已選行程選項
               ListTile(
                 leading: const Icon(Icons.add_circle, color: Colors.green),
-                title: const Text('保留已選的行程'),
-                subtitle: const Text('根據已選景點，繼續規劃其他景點和活動'),
+                title: Text(AppLocalizations.of(context)!.keepSelectedItinerary),
+                subtitle: Text(AppLocalizations.of(context)!.preserveDescription),
                 onTap: () {
                   print('Dialog: selected preserve'); // 添加日誌
                   Navigator.pop(dialogContext);
@@ -160,7 +161,7 @@ class TripAssistantPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('取消'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
           ],
         );

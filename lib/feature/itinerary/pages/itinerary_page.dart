@@ -52,8 +52,13 @@ class _ItineraryPageState extends State<ItineraryPage> with WidgetsBindingObserv
     
     try {
       final loadedItineraries = await _itineraryService.getAllItineraries();
-      print('取得行程數量: ${loadedItineraries.length}');
-      print('行程內容: $loadedItineraries');
+      
+      // 只在有 mounted context 時才存取 localizations
+      if (mounted) {
+        final localizations = AppLocalizations.of(context);
+        print(localizations?.getItineraryCount(loadedItineraries.length) ?? 'Retrieved itinerary count: ${loadedItineraries.length}');
+        print('${localizations?.itineraryContent ?? 'Itinerary content'}: $loadedItineraries');
+      }
       
       setState(() {
         itineraries = loadedItineraries;
@@ -67,10 +72,11 @@ class _ItineraryPageState extends State<ItineraryPage> with WidgetsBindingObserv
       if (e.toString().contains('需要登入')) {
         // 顯示登入提示對話框
         if (mounted) {
+          final localizations = AppLocalizations.of(context);
           showDialog(
             context: context,
             builder: (context) => LoginRequiredDialog(
-              feature: '旅程リストを表示',
+              feature: localizations?.displayItineraryList ?? '顯示行程列表',
               onLoginPressed: () {
                 Navigator.of(context).pop();
                 // 重新載入資料
@@ -82,10 +88,12 @@ class _ItineraryPageState extends State<ItineraryPage> with WidgetsBindingObserv
         return;
       }
       
-      print('載入行程列表時出錯: $e');
+      // 只在有 mounted context 時才存取 localizations 和顯示 SnackBar
       if (mounted) {
+        final localizations = AppLocalizations.of(context);
+        print('${localizations?.loadItineraryListError ?? 'Error loading itinerary list'}: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入失敗: $e')),
+          SnackBar(content: Text(localizations?.getLoadError(e.toString()) ?? 'Load failed: $e')),
         );
       }
     }

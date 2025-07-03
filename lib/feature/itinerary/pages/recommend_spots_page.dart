@@ -4,6 +4,7 @@ import '../models/itinerary.dart';
 import '../models/recommended_spot.dart';
 import '../components/recommended_spot_card.dart';
 import '../components/recommendation_tabs.dart';
+import '../../../utils/app_localizations.dart';
 
 class RecommendSpotsPage extends StatefulWidget {
   final Itinerary itinerary;
@@ -68,7 +69,7 @@ class _RecommendSpotsPageState extends State<RecommendSpotsPage> with SingleTick
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('行程建議'),
+        title: Text(AppLocalizations.of(context)!.itinerarySuggestions),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -138,7 +139,7 @@ class _RecommendSpotsPageState extends State<RecommendSpotsPage> with SingleTick
                         foregroundColor: Colors.black87,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('關閉'),
+                      child: Text(AppLocalizations.of(context)!.close),
                     ),
                   ),
                 ),

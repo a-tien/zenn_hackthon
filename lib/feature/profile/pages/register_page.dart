@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../../../utils/app_localizations.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -56,7 +57,7 @@ class _RegisterPageState extends State<RegisterPage> {
         if (mounted) {
           // 顯示成功訊息
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('註冊成功，請登入')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.registrationSuccess ?? '註冊成功，請登入')),
           );
           
           // 延遲一下再返回，讓使用者看到成功提示

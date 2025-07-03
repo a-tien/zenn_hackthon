@@ -8,6 +8,7 @@ import '../components/add_to_itinerary_dialog.dart';
 import '../../common/widgets/login_required_dialog.dart';
 import '../../common/services/firestore_service.dart';
 import '../../itinerary/models/itinerary.dart';
+import '../../../utils/app_localizations.dart';
 
 class CollectionDetailPage extends StatefulWidget {
   final FavoriteCollection collection;
@@ -74,7 +75,7 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('載入景點失敗: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.getLoadSpotsFailed(e.toString()) ?? '載入景點失敗: $e')),
         );
       }
     }
@@ -121,7 +122,7 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
               onPressed: () {
                 if (nameController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('請輸入收藏集名稱')),
+                    SnackBar(content: Text(AppLocalizations.of(context)?.pleaseEnterCollectionName ?? '請輸入收藏集名稱')),
                   );
                   return;
                 }
@@ -157,14 +158,14 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('收藏集更新成功')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.collectionUpdateSuccess ?? '收藏集更新成功')),
           );
         }
       } catch (e) {
         print('Error updating collection: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('更新收藏集失敗: $e')),          );
+            SnackBar(content: Text(AppLocalizations.of(context)?.getUpdateCollectionFailed(e.toString()) ?? '更新收藏集失敗: $e')),          );
         }
       }
     }
@@ -208,14 +209,14 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
         if (mounted) {
           Navigator.pop(context); // 返回收藏主頁面
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('收藏集刪除成功')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.collectionDeleteSuccess ?? '收藏集刪除成功')),
           );
         }
       } catch (e) {
         print('Error deleting collection: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('刪除收藏集失敗: $e')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.getDeleteCollectionFailed(e.toString()) ?? '刪除收藏集失敗: $e')),
           );
         }
       }
@@ -265,14 +266,14 @@ class _CollectionDetailPageState extends State<CollectionDetailPage> {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('已從收藏集移除「${spot.name}」')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.getRemovedFromCollection(spot.name) ?? '已從收藏集移除「${spot.name}」')),
           );
         }
       } catch (e) {
         print('Error removing spot from collection: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('移除景點失敗: $e')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.getRemoveSpotFailed(e.toString()) ?? '移除景點失敗: $e')),
           );
         }
       }
